@@ -6,7 +6,7 @@ This repository contains the official **Backend-for-Frontend (BFF)** and **API G
 
 * 🔐 **Secure API Gateway**: Acts as the single, secure entry point for the frontend, handling all user authentication and session management with JWT.
 * 🚀 **AI Service Orchestration**: Intelligently calls the internal Python AI backend to perform complex tasks like document analysis, RAG, and translation.
-* 💾 **Persistent Data Storage**: Manages all user data, document metadata, and conversation histories in a dedicated database (MongoDB or PostgreSQL).
+* 💾 **Persistent Data Storage**: Manages all user data, document metadata, and conversation histories in a dedicated database (PostgreSQL).
 * 🌐 **Real-time Language Support**: Proxies proactive language detection requests to the AI backend to enable a seamless multilingual user experience.
 * 🛡️ **Enhanced Security**: Built with `helmet` for protection against common web vulnerabilities and `express-rate-limit` to prevent abuse.
 
