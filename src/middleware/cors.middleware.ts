@@ -3,10 +3,9 @@ import type { Request, Response, NextFunction } from 'express';
 const rawAllowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:3000',
-  'https://legalai-six.vercel.app',
+  'https://www.legalai.software'
 ].filter(Boolean) as string[];
 
-// Normalize (remove trailing slashes)
 const allowedOrigins = new Set(
   rawAllowedOrigins.map(o => o.replace(/\/$/, ''))
 );

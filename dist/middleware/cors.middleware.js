@@ -1,9 +1,8 @@
 const rawAllowedOrigins = [
     process.env.FRONTEND_URL,
     'http://localhost:3000',
-    'https://legalai-six.vercel.app',
+    'https://www.legalai.software'
 ].filter(Boolean);
-// Normalize (remove trailing slashes)
 const allowedOrigins = new Set(rawAllowedOrigins.map(o => o.replace(/\/$/, '')));
 export function corsMiddleware(req, res, next) {
     const origin = req.headers.origin;
