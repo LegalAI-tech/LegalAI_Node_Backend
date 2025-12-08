@@ -10,6 +10,7 @@ declare class CacheService {
     getTranslation(text: string, sourceLang: string, targetLang: string): Promise<unknown>;
     invalidate(pattern: string): Promise<void>;
     clearUserCache(userId: string): Promise<void>;
+    clearUserRateLimits(userId: string): Promise<void>;
     clearAllAICache(): Promise<{
         success: boolean;
         message: string;

@@ -1,40 +1,26 @@
-import cors from 'cors';
-/**
- * CORS configuration
- * Allows requests from specified origins
- */
-const allowedOrigins = [
+const rawAllowedOrigins = [
     process.env.FRONTEND_URL,
     'http://localhost:3000',
-    'https://legal-ai-five-blue.vercel.app',
-];
-export const corsOptions = {
-    origin: (origin, callback) => {
-        if (!origin) {
-            return callback(null, true);
+    'https://legalai-six.vercel.app',
+].filter(Boolean);
+// Normalize (remove trailing slashes)
+const allowedOrigins = new Set(rawAllowedOrigins.map(o => o.replace(/\/$/, '')));
+export function corsMiddleware(req, res, next) {
+    const origin = req.headers.origin;
+    if (origin) {
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        if (allowedOrigins.has(normalizedOrigin)) {
+            res.header('Access-Control-Allow-Origin', origin);
+            res.header('Vary', 'Origin');
+            res.header('Access-Control-Allow-Credentials', 'true');
+            res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
+            res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
         }
-        // Check if origin is in allowed list
-        if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-        }
-        else {
-            console.warn(`CORS blocked origin: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: [
-        'Content-Type',
-        'Authorization',
-        'X-Requested-With',
-        'Accept',
-        'Origin',
-    ],
-    exposedHeaders: ['X-Total-Count', 'X-Page', 'X-Per-Page'],
-    maxAge: 86400, // 24 hours
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-};
-export const corsMiddleware = cors(corsOptions);
+    }
+    // Handle preflight here
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    return next();
+}
 //# sourceMappingURL=cors.middleware.js.map

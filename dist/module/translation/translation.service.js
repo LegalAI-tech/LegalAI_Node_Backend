@@ -3,7 +3,6 @@ import pythonBackend from '../../services/python-backend.service.js';
 import cacheService from '../../services/cache.service.js';
 class TranslationService {
     async translate(userId, text, sourceLang, targetLang) {
-        // Check cache first
         const cached = await cacheService.getTranslation(text, sourceLang, targetLang);
         if (cached && typeof cached === 'string') {
             return {
@@ -14,14 +13,11 @@ class TranslationService {
                 cached: true,
             };
         }
-        // Call Python backend
         const result = await pythonBackend.translate(text, sourceLang, targetLang);
-        // Extract translated text
         const translatedText = result.translated_text || '';
         if (!translatedText) {
             throw new Error('Translation failed: No translated text returned');
         }
-        // Save to database
         await prisma.translation.create({
             data: {
                 userId,
@@ -32,7 +28,6 @@ class TranslationService {
                 metadata: {},
             },
         });
-        // Cache the translation
         await cacheService.cacheTranslation(text, sourceLang, targetLang, translatedText);
         return {
             sourceText: text,
@@ -43,11 +38,9 @@ class TranslationService {
         };
     }
     async detectLanguage(text) {
-        // Validate input
         if (!text || text.trim().length === 0) {
             throw new Error('Text is required for language detection');
         }
-        // Call Python backend
         const result = await pythonBackend.detectLanguage(text);
         return {
             language: result.suggested_output.language,

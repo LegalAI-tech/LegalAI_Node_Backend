@@ -1,8 +1,5 @@
 import { logger } from '../utils/logger.js';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-/**
- * Custom application error class
- */
 export class AppError extends Error {
     statusCode;
     isOperational;
@@ -15,11 +12,7 @@ export class AppError extends Error {
         Error.captureStackTrace(this, this.constructor);
     }
 }
-/**
- * Global error handler middleware
- */
 export const errorHandler = (err, req, res, next) => {
-    // Log error
     logger.error('Error occurred:', {
         message: err.message,
         stack: err.stack,
@@ -28,7 +21,6 @@ export const errorHandler = (err, req, res, next) => {
         ip: req.ip,
         userId: req.user?.id,
     });
-    // Handle AppError (custom errors)
     if (err instanceof AppError) {
         return res.status(err.statusCode).json({
             success: false,
@@ -37,11 +29,9 @@ export const errorHandler = (err, req, res, next) => {
             ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
         });
     }
-    // Handle Prisma errors
     if (err instanceof PrismaClientKnownRequestError) {
         return handlePrismaError(err, res);
     }
-    // Handle validation errors
     if (err.name === 'ValidationError') {
         return res.status(400).json({
             success: false,
@@ -50,7 +40,6 @@ export const errorHandler = (err, req, res, next) => {
             code: 'VALIDATION_ERROR',
         });
     }
-    // Handle JWT errors
     if (err.name === 'JsonWebTokenError') {
         return res.status(401).json({
             success: false,
@@ -65,11 +54,9 @@ export const errorHandler = (err, req, res, next) => {
             code: 'TOKEN_EXPIRED',
         });
     }
-    // Handle multer errors (file upload)
     if (err.name === 'MulterError') {
         return handleMulterError(err, res);
     }
-    // Default error response
     const statusCode = 500;
     const message = process.env.NODE_ENV === 'production'
         ? 'Internal server error'
@@ -84,13 +71,9 @@ export const errorHandler = (err, req, res, next) => {
         }),
     });
 };
-/**
- * Handle Prisma database errors
- */
 function handlePrismaError(err, res) {
     switch (err.code) {
         case 'P2002':
-            // Unique constraint violation
             return res.status(409).json({
                 success: false,
                 message: 'A record with this information already exists',
@@ -98,21 +81,18 @@ function handlePrismaError(err, res) {
                 field: err.meta?.target?.join(', '),
             });
         case 'P2025':
-            // Record not found
             return res.status(404).json({
                 success: false,
                 message: 'Record not found',
                 code: 'NOT_FOUND',
             });
         case 'P2003':
-            // Foreign key constraint violation
             return res.status(400).json({
                 success: false,
                 message: 'Invalid reference to related record',
                 code: 'FOREIGN_KEY_ERROR',
             });
         case 'P2014':
-            // Invalid ID
             return res.status(400).json({
                 success: false,
                 message: 'Invalid ID provided',
@@ -129,9 +109,6 @@ function handlePrismaError(err, res) {
             });
     }
 }
-/**
- * Handle Multer file upload errors
- */
 function handleMulterError(err, res) {
     if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({
@@ -160,19 +137,11 @@ function handleMulterError(err, res) {
         code: 'UPLOAD_ERROR',
     });
 }
-/**
- * Async error wrapper
- * Wraps async route handlers to catch errors
- */
 export const asyncHandler = (fn) => {
     return (req, res, next) => {
         Promise.resolve(fn(req, res, next)).catch(next);
     };
 };
-/**
- * Not found error handler
- * Should be placed after all routes
- */
 export const notFoundHandler = (req, res, next) => {
     const error = new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404, 'NOT_FOUND');
     next(error);

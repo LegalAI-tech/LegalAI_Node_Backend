@@ -1,21 +1,9 @@
-/**
- * General API rate limiter
- * 100 requests per 15 minutes per IP
- */
+import type { Request, Response, NextFunction } from 'express';
 export declare const apiLimiter: import("express-rate-limit").RateLimitRequestHandler;
-/**
- * Strict rate limiter for authentication routes
- * 5 requests per 15 minutes per IP
- */
 export declare const authLimiter: import("express-rate-limit").RateLimitRequestHandler;
-/**
- * Rate limiter for file uploads
- * 10 uploads per hour per user
- */
 export declare const uploadLimiter: import("express-rate-limit").RateLimitRequestHandler;
-/**
- * Rate limiter for message sending
- * 20 messages per minute per user
- */
 export declare const messageLimiter: import("express-rate-limit").RateLimitRequestHandler;
+export declare const persistentMessageLimiter: (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;
+export declare const persistentUploadLimiter: (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;
+export declare const persistentApiLimiter: (req: Request, res: Response, next: NextFunction) => Promise<void | Response<any, Record<string, any>>>;
 //# sourceMappingURL=rateLimiter.middleware.d.ts.map

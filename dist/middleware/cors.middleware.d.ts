@@ -1,8 +1,3 @@
-import cors from 'cors';
-export declare const corsOptions: cors.CorsOptions;
-export declare const corsMiddleware: (req: cors.CorsRequest, res: {
-    statusCode?: number | undefined;
-    setHeader(key: string, value: string): any;
-    end(): any;
-}, next: (err?: any) => any) => void;
+import type { Request, Response, NextFunction } from 'express';
+export declare function corsMiddleware(req: Request, res: Response, next: NextFunction): void | Response<any, Record<string, any>>;
 //# sourceMappingURL=cors.middleware.d.ts.map

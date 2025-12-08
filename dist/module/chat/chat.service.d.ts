@@ -76,9 +76,6 @@ declare class ChatService {
         documentName: string | null;
         sessionId: string | null;
     }>;
-    /**
-     * Share or unshare a conversation
-     */
     shareConversation(userId: string, conversationId: string, share: boolean, req: any): Promise<{
         link: string;
         message?: undefined;
@@ -86,9 +83,6 @@ declare class ChatService {
         message: string;
         link?: undefined;
     }>;
-    /**
-     * Get shared conversation by hash link
-     */
     getSharedConversation(shareLink: string): Promise<{
         userName: string;
         conversation: {

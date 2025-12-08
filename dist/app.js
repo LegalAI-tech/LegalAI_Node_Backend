@@ -1,5 +1,4 @@
 import express from 'express';
-import helmet from 'helmet';
 import compression from 'compression';
 import passport from './config/passport.js';
 import { errorHandler } from './middleware/error.middleware.js';
@@ -14,8 +13,8 @@ import userRoutes from './module/user/user.route.js';
 const app = express();
 // Trust proxy for Render deployment
 app.set('trust proxy', 1);
-app.use(helmet());
 app.use(corsMiddleware);
+app.options('*', corsMiddleware);
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

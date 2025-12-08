@@ -1,29 +1,19 @@
 import chatService from './chat.service.js';
 import { z } from 'zod';
 class ChatController {
-    /**
-     * Create a new conversation
-     * - NORMAL mode: Simple chat, no session_id or document required
-     * - AGENTIC mode: AI agent with tools, uses session_id, document is optional
-     */
     async createConversation(req, res, next) {
         try {
             const userId = req.user.id;
             const { id, title, mode, documentId, documentName, sessionId } = req.body;
-            // Validation
             if (!mode || !['NORMAL', 'AGENTIC'].includes(mode)) {
                 return res.status(400).json({
                     success: false,
                     message: 'Mode is required and must be either NORMAL or AGENTIC',
                 });
             }
-            // Use provided title or generate a default one
             const conversationTitle = title || `${mode} Chat - ${new Date().toLocaleString()}`;
-            const conversation = await chatService.createConversation(userId, conversationTitle, mode, documentId, documentName, sessionId, id // Pass the client-provided ID
-            );
-            // Return 200 if conversation already existed, 201 if newly created
-            const statusCode = req.body.id && conversation.createdAt < new Date(Date.now() - 1000) ? 200 : 201;
-            res.status(statusCode).json({
+            const conversation = await chatService.createConversation(userId, conversationTitle, mode, documentId, documentName, sessionId, id);
+            res.status(201).json({
                 success: true,
                 data: conversation,
             });
@@ -32,41 +22,24 @@ class ChatController {
             next(error);
         }
     }
-    /**
-     * Send a message in a conversation
-     * - NORMAL mode: Simple chat response
-     * - AGENTIC mode: AI agent with tools, maintains session_id, can include document for context
-     * - File upload: Supported in AGENTIC mode for document analysis
-     *
-     * Request format:
-     * - Content-Type: multipart/form-data (when sending file)
-     * - Content-Type: application/json (when no file)
-     *
-     * Body fields:
-     * - message: string (required)
-     * - mode: 'NORMAL' | 'AGENTIC' (required)
-     * - file: File (optional, for AGENTIC mode)
-     */
     async sendMessage(req, res, next) {
         try {
             const userId = req.user.id;
             const { conversationId } = req.params;
-            // Handle both JSON and form-data
             const message = req.body?.message;
             const mode = req.body?.mode;
             const inputLanguage = req.body?.input_language;
             const outputLanguage = req.body?.output_language;
-            // Validation
             if (!conversationId) {
                 return res.status(400).json({
                     success: false,
                     message: 'Conversation ID is required',
                 });
             }
-            if (!message || message.trim() === '') {
+            if (!message) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Message is required and cannot be empty',
+                    message: 'Message is required',
                 });
             }
             if (!mode || !['NORMAL', 'AGENTIC'].includes(mode)) {
@@ -175,14 +148,10 @@ class ChatController {
             next(error);
         }
     }
-    /**
-     * Share a conversation - creates or manages sharing link
-     */
     async shareConversation(req, res, next) {
         try {
             const userId = req.user.id;
             const { conversationId } = req.params;
-            // Validation with zod
             const shareSchema = z.object({
                 share: z.boolean()
             });
@@ -213,9 +182,7 @@ class ChatController {
             else {
                 res.status(200).json({
                     success: true,
-                    data: {
-                        message: 'Conversation sharing disabled',
-                    },
+                    message: 'Conversation sharing disabled',
                 });
             }
         }
@@ -223,9 +190,6 @@ class ChatController {
             next(error);
         }
     }
-    /**
-     * Get shared conversation by secure link (no authentication required)
-     */
     async getSharedConversation(req, res, next) {
         try {
             const { shareLink } = req.params;

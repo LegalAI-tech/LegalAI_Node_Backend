@@ -17,7 +17,6 @@ class TranslationController {
     async detectLanguage(req, res, next) {
         try {
             const { text } = req.body;
-            // Validate input
             if (!text) {
                 return res.status(400).json({
                     success: false,

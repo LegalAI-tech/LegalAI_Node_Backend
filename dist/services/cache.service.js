@@ -1,7 +1,6 @@
 import redis from '../config/redis.js';
 import crypto from 'crypto';
 class CacheService {
-    // Generate hash for cache key
     generateHash(data) {
         return crypto
             .createHash('sha256')
@@ -9,7 +8,6 @@ class CacheService {
             .digest('hex')
             .substring(0, 16);
     }
-    // Cache user data
     async cacheUserData(userId, data, ttl = 3600) {
         try {
             await redis.setex(`user:${userId}`, ttl, JSON.stringify(data));
@@ -31,7 +29,6 @@ class CacheService {
             return null;
         }
     }
-    // Cache conversation
     async cacheConversation(conversationId, data, ttl = 1800) {
         try {
             await redis.setex(`conversation:${conversationId}`, ttl, JSON.stringify(data));
@@ -53,17 +50,14 @@ class CacheService {
             return null;
         }
     }
-    // Cache AI responses
     async cacheAIResponse(query, mode, response, ttl = 7200) {
         try {
             const hash = this.generateHash({ query, mode });
-            // Ensure response is properly serialized
             const serialized = JSON.stringify(response);
             await redis.setex(`ai:${hash}`, ttl, serialized);
         }
         catch (error) {
             console.error('Error caching AI response:', error);
-            // Don't throw - caching is not critical
         }
     }
     async getAIResponse(query, mode) {
@@ -73,9 +67,7 @@ class CacheService {
             if (!cached) {
                 return null;
             }
-            // Handle string values
             if (typeof cached === 'string') {
-                // Check if it's already an object string like "[object Object]"
                 if (cached === '[object Object]' || cached.startsWith('[object')) {
                     console.warn('Invalid cached data detected, clearing cache');
                     await redis.del(`ai:${hash}`);
@@ -86,7 +78,6 @@ class CacheService {
                 }
                 catch (parseError) {
                     console.error('Error parsing cached AI response:', parseError);
-                    // Clear corrupted cache
                     await redis.del(`ai:${hash}`);
                     return null;
                 }
@@ -98,33 +89,54 @@ class CacheService {
             return null;
         }
     }
-    // Cache translation
     async cacheTranslation(text, sourceLang, targetLang, translation, ttl = 86400) {
-        const hash = this.generateHash({ text, sourceLang, targetLang });
-        await redis.setex(`translation:${hash}`, ttl, translation);
+        try {
+            const hash = this.generateHash({ text, sourceLang, targetLang });
+            await redis.setex(`translation:${hash}`, ttl, translation);
+        }
+        catch (error) {
+            console.error('Error caching translation:', error);
+        }
     }
     async getTranslation(text, sourceLang, targetLang) {
-        const hash = this.generateHash({ text, sourceLang, targetLang });
-        return await redis.get(`translation:${hash}`);
+        try {
+            const hash = this.generateHash({ text, sourceLang, targetLang });
+            return await redis.get(`translation:${hash}`);
+        }
+        catch (error) {
+            console.error('Error retrieving translation from cache:', error);
+            return null;
+        }
     }
-    // Invalidate cache
     async invalidate(pattern) {
-        // Note: Upstash Redis doesn't support KEYS command
-        // Use pattern-based deletion carefully
-        await redis.del(pattern);
+        try {
+            await redis.del(pattern);
+        }
+        catch (error) {
+            console.error('Error invalidating cache:', error);
+        }
     }
-    // Clear user cache
     async clearUserCache(userId) {
-        await redis.del(`user:${userId}`);
+        try {
+            await redis.del(`user:${userId}`);
+        }
+        catch (error) {
+            console.error('Error clearing user cache:', error);
+        }
     }
-    // Clear all AI response caches (useful for debugging)
+    async clearUserRateLimits(userId) {
+        try {
+            const limiterNames = ['message', 'upload', 'api'];
+            const delKeys = limiterNames.map((name) => `ratelimit:user:${userId}:${name}`);
+            await redis.del(...delKeys);
+        }
+        catch (error) {
+            console.error('Error clearing user rate limits:', error);
+        }
+    }
     async clearAllAICache() {
         try {
-            // Note: This is a simple implementation
-            // For production, you might want to track cache keys separately
             console.log('Clearing all AI caches...');
-            // Since we can't use KEYS in Upstash, we'll just note this limitation
-            // Individual corrupted caches will be cleared automatically when accessed
             return { success: true, message: 'Cache clearing triggered' };
         }
         catch (error) {
@@ -132,7 +144,6 @@ class CacheService {
             return { success: false, message: 'Error clearing cache' };
         }
     }
-    // Flush all caches (use with caution)
     async flushAll() {
         try {
             await redis.flushdb();
