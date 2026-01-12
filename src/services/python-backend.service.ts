@@ -40,9 +40,10 @@ class PythonBackendService {
     );
   }
 
-  async chat(prompt: string): Promise<ChatResponse> {
+  async chat(prompt: string, history?: Array<{role: string; content: string}>): Promise<ChatResponse> {
     const request: ChatRequest = {
       prompt,
+      history: history || [],
     };
 
     const response = await this.client.post<ChatResponse>('/api/v1/chat', request);

@@ -39,7 +39,8 @@ export interface UploadAndChatResponse {
 
 // General Chat Types
 export interface ChatRequest {
-  prompt: string; 
+  prompt: string;
+  history?: Array<{role: string; content: string}>; 
 }
 
 export interface ChatResponse {
