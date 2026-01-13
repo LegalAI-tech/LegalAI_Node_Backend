@@ -19,9 +19,10 @@ class PythonBackendService {
             throw error;
         });
     }
-    async chat(prompt) {
+    async chat(prompt, history) {
         const request = {
             prompt,
+            history: history || [],
         };
         const response = await this.client.post('/api/v1/chat', request);
         return response.data;

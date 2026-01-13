@@ -2,7 +2,10 @@ import { AgentChatResponse, UploadAndChatResponse, ChatResponse, TranslateRespon
 declare class PythonBackendService {
     private client;
     constructor();
-    chat(prompt: string): Promise<ChatResponse>;
+    chat(prompt: string, history?: Array<{
+        role: string;
+        content: string;
+    }>): Promise<ChatResponse>;
     agentChat(message: string, sessionId?: string, documentId?: string): Promise<AgentChatResponse>;
     agentUploadAndChat(file: Buffer, fileName: string, initialMessage?: string, sessionId?: string, inputLanguage?: string, outputLanguage?: string): Promise<UploadAndChatResponse>;
     detectLanguage(text: string): Promise<DetectLanguageResponse>;

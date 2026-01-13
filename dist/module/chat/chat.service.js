@@ -263,7 +263,12 @@ class ChatService {
             }
         }
         else {
-            aiResponse = await pythonBackendService.chat(message);
+            // Format conversation history for Python backend
+            const history = conversation.messages.map(msg => ({
+                role: msg.role.toLowerCase(), // Convert USER/ASSISTANT to user/assistant
+                content: msg.content
+            }));
+            aiResponse = await pythonBackendService.chat(message, history);
         }
         if (!file) {
             await cacheService.cacheAIResponse(message, mode, aiResponse);
