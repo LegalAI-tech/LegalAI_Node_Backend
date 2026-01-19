@@ -40,7 +40,8 @@ export interface UploadAndChatResponse {
 // General Chat Types
 export interface ChatRequest {
   prompt: string;
-  history?: Array<{role: string; content: string}>; 
+  history?: Array<{role: string; content: string}>;
+  summary?: string | null; 
 }
 
 export interface ChatResponse {
