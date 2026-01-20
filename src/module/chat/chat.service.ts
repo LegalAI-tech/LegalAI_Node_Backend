@@ -329,7 +329,7 @@ class ChatService {
         role: msg.role.toLowerCase(), // Convert USER/ASSISTANT to user/assistant
         content: msg.content
       }));
-      aiResponse = await pythonBackendService.chat(message, history);
+      aiResponse = await pythonBackendService.chat(message, history, conversation.summary || null);
     }
 
     if (!file) {
@@ -362,6 +362,16 @@ class ChatService {
       },
     });
 
+    if (mode === 'NORMAL' && aiResponse.updated_summary) {
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          summary: aiResponse.updated_summary,
+          summaryUpdatedAt: new Date()
+        }
+      });
+    }
+    
     await prisma.conversation.update({
       where: { id: conversationId },
       data: { lastMessageAt: new Date() },
