@@ -268,9 +268,8 @@ class ChatService {
             }
         }
         else {
-            // Format conversation history for Python backend
             const history = conversation.messages.map(msg => ({
-                role: msg.role.toLowerCase(), // Convert USER/ASSISTANT to user/assistant
+                role: msg.role.toLowerCase(),
                 content: msg.content
             }));
             aiResponse = await pythonBackendService.chat(message, history, conversation.summary || null);
@@ -301,11 +300,12 @@ class ChatService {
                 },
             },
         });
-        if (mode === 'NORMAL' && aiResponse.updated_summary) {
+        const updatedSummary = aiResponse.updated_summary;
+        if (updatedSummary && typeof updatedSummary === 'string') {
             await prisma.conversation.update({
                 where: { id: conversationId },
                 data: {
-                    summary: aiResponse.updated_summary,
+                    summary: updatedSummary,
                     summaryUpdatedAt: new Date()
                 }
             });

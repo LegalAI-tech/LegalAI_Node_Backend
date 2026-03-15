@@ -20,6 +20,78 @@ import {
 class PythonBackendService {
   private client: AxiosInstance;
 
+  private getBasePathPrefixes(): string[] {
+    const rawBaseUrl = this.client.defaults.baseURL || '';
+
+    try {
+      const parsed = new URL(rawBaseUrl);
+      const normalizedPath = parsed.pathname.replace(/\/+$/, '');
+
+      if (!normalizedPath || normalizedPath === '/') {
+        return [];
+      }
+
+      const knownPrefixes = ['/api/v3', '/api/v1', '/api'];
+      return knownPrefixes.filter((prefix) =>
+        normalizedPath.toLowerCase().endsWith(prefix)
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  private buildCandidatePaths(paths: string[]): string[] {
+    const candidates: string[] = [];
+    const seen = new Set<string>();
+    const basePrefixes = this.getBasePathPrefixes();
+
+    const addCandidate = (path: string) => {
+      if (!seen.has(path)) {
+        seen.add(path);
+        candidates.push(path);
+      }
+    };
+
+    for (const path of paths) {
+      addCandidate(path);
+
+      for (const prefix of basePrefixes) {
+        if (path.toLowerCase().startsWith(prefix)) {
+          const withoutPrefix = path.slice(prefix.length) || '/';
+          addCandidate(withoutPrefix.startsWith('/') ? withoutPrefix : `/${withoutPrefix}`);
+        }
+      }
+    }
+
+    return candidates;
+  }
+
+  private async postWithFallbacks<T>(
+    paths: string[],
+    data: any,
+    config?: { headers?: Record<string, string> }
+  ): Promise<T> {
+    let lastError: any;
+
+    const candidatePaths = this.buildCandidatePaths(paths);
+
+    for (const path of candidatePaths) {
+      try {
+        const response = await this.client.post<T>(path, data, config);
+        return response.data;
+      } catch (error: any) {
+        const status = error?.response?.status;
+        if (status === 404) {
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    throw lastError;
+  }
+
   constructor() {
     const timeout = parseInt(process.env.PYTHON_BACKEND_TIMEOUT || '180000'); // 180s default
 
@@ -96,22 +168,38 @@ class PythonBackendService {
       formData.append('output_language', outputLanguage);
     }
 
-    const response = await this.client.post<UploadAndChatResponse>(
-      '/api/v1/agent/upload-and-chat',
+    return this.postWithFallbacks<UploadAndChatResponse>(
+      [
+        '/api/v3/agent/upload-and-chat',
+        '/api/v1/agent/upload-and-chat',
+        '/api/v3/upload-and-chat',
+        '/api/v1/upload-and-chat',
+        '/agent/upload-and-chat',
+        '/upload-and-chat',
+      ],
       formData,
       {
-        headers: formData.getHeaders(),
+        headers: formData.getHeaders() as Record<string, string>,
       }
     );
-    return response.data;
   }
 
   async detectLanguage(text: string): Promise<DetectLanguageResponse> {
-    const response = await this.client.post<DetectLanguageResponse>(
-      '/api/v3/agent/detect-language',
+    return this.postWithFallbacks<DetectLanguageResponse>(
+      [
+        '/api/v3/language/detect',
+        '/api/v3/agent/detect-language',
+        '/api/v1/agent/detect-language',
+        '/api/v3/detect-language',
+        '/api/v1/detect-language',
+        '/api/v3/translation/detect-language',
+        '/api/v1/translation/detect-language',
+        '/language/detect',
+        '/agent/detect-language',
+        '/detect-language',
+      ],
       { text }
     );
-    return response.data;
   }
 
   async listTemplates(): Promise<TemplateListResponse> {

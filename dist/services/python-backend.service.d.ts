@@ -1,6 +1,9 @@
 import { AgentChatResponse, UploadAndChatResponse, ChatResponse, TranslateResponse, DetectLanguageResponse, DocGenResponse, TemplateListResponse, TemplateSchemaResponse, TemplateDetailResponse, TemplateCriticalFieldsResponse } from '../types/python-backend.types.js';
 declare class PythonBackendService {
     private client;
+    private getBasePathPrefixes;
+    private buildCandidatePaths;
+    private postWithFallbacks;
     constructor();
     chat(prompt: string, history?: Array<{
         role: string;

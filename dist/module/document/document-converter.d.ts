@@ -6,8 +6,8 @@ export interface ConversionResult {
 }
 declare class DocumentConverterService {
     /**
-     * @param htmlContent  Raw HTML/text returned by the Python backend
-     * @param format       Target format — 'pdf' | 'docx' | 'txt'
+     * @param htmlContent
+     * @param format
      * @returns            { buffer, mimeType, extension }
      */
     convert(htmlContent: string, format: ConvertFormat): Promise<ConversionResult>;

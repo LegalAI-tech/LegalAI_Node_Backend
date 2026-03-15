@@ -1,4 +1,3 @@
-import { type ValidationError } from '../../../utils/validator.js';
 declare class LawyerAuthService {
     register(input: {
         email: string;
@@ -18,7 +17,7 @@ declare class LawyerAuthService {
             verificationStatus: import("@prisma/client").$Enums.VerificationStatus;
         };
         verificationStatus: string;
-        validationErrors: ValidationError[] | undefined;
+        validationErrors: import("../../../utils/validator.js").ValidationError[] | undefined;
         message: string;
     }>;
     verifyEmail(email: string, otp: string): Promise<{
