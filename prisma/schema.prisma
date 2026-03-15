@@ -81,14 +81,14 @@ model User {
   id            String        @id @default(cuid())
   email         String        @unique
   name          String?
-  password      String?       // Null for OAuth users
+  password      String?       
   avatar        String?
   provider      AuthProvider  @default(LOCAL)
-  providerId    String?       // OAuth provider user ID
+  providerId    String?       
   
-  preferences   Json?         // Store user preferences
+  preferences   Json?        
   
-  shareEnabled  Boolean       @default(false) // Enable/disable sharing
+  shareEnabled  Boolean       @default(false) 
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
@@ -109,17 +109,16 @@ model Conversation {
   title         String
   mode          ChatMode      @default(NORMAL)
   
-  documentId    String?       // Python backend document_id
+  documentId    String?       
   documentName  String?
   
-  sessionId     String?       // Python backend session_id for continuity
+  sessionId     String?       
   
-  metadata      Json?         // Store storageUrl, etc.
+  metadata      Json?        
   
   language      String?
 
-  isShared      Boolean       @default(false) // Individual chat sharing
-  
+  isShared      Boolean       @default(false) 
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   lastMessageAt DateTime      @default(now())
@@ -143,11 +142,11 @@ model Message {
   role            MessageRole
   content         String        @db.Text
   
-  tokens          Int?          // Token count
-  model           String?       // Model used
-  metadata        Json?         // Additional data (citations, tool calls, etc.)
+  tokens          Int?          
+  model           String?       
+  metadata        Json?        
   
-  attachments     String[]      // Array of file URLs/paths
+  attachments     String[]      
   
   createdAt       DateTime      @default(now())
   
@@ -162,11 +161,11 @@ model Document {
   userId        String
   title         String
   content       String        @db.Text
-  format        String        // PDF, DOCX, etc.
-  fileUrl       String?       // S3/storage URL
+  format        String       
+  fileUrl       String?       
   
   prompt        String?       @db.Text
-  generatedBy   String?       // Model/service used
+  generatedBy   String?      
   metadata      Json?
   
   createdAt     DateTime      @default(now())
@@ -209,7 +208,7 @@ model RefreshToken {
 
 model RateLimit {
   id          String    @id @default(cuid())
-  identifier  String    // IP or user ID
+  identifier  String    
   endpoint    String
   count       Int       @default(1)
   resetAt     DateTime
@@ -222,13 +221,13 @@ model RateLimit {
 
 model SharedLink {
   id             String        @id @default(cuid())
-  hashedLink     String        @unique // Random hash for secure sharing
+  hashedLink     String        @unique 
   userId         String
-  conversationId String?       // Optional: specific conversation
+  conversationId String?      
 
-  expiresAt      DateTime?     // Optional expiration
-  viewCount      Int           @default(0) // Track views
-  maxViews       Int?          // Optional view limit
+  expiresAt      DateTime?    
+  viewCount      Int           @default(0) 
+  maxViews       Int?          
   
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
@@ -561,7 +560,7 @@ model LawyerConversation {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   lastMessageAt DateTime    @default(now())
-  summary           String?   @db.Text
+  summary       String?     @db.Text
   summaryUpdatedAt  DateTime?
   lastMemoryInjectedAt  DateTime?
   memoryVersionAtInject Int?

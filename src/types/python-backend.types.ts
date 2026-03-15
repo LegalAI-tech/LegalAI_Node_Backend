@@ -27,7 +27,7 @@ export interface AgentChatResponse {
 export interface UploadAndChatResponse {
   document_id: string;           
   storage_url: string;
-  agent_response: string;  // The formatted response string with translations
+  agent_response: string;  
   session_id: string;       
   tools_used: string[];
   intermediate_steps: any[];

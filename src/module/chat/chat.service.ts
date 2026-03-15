@@ -299,27 +299,28 @@ class ChatService {
           data: updateData,
         });
       }
-    } else if (conversation.documentId && mode === 'AGENTIC') {
-      const sessionId = conversation.sessionId;
-      aiResponse = await pythonBackendService.agentChat(
-        message,
-        sessionId || undefined,
-        conversation.documentId
-      );
 
-      const newSessionId = getSessionId(aiResponse);
-      if (newSessionId && newSessionId !== sessionId) {
-        await prisma.conversation.update({
-          where: { id: conversationId },
-          data: { sessionId: newSessionId },
-        });
-      }
+    } else if (conversation.documentId && mode === 'AGENTIC') {
+        const sessionId = conversation.sessionId;
+        aiResponse = await pythonBackendService.agentChat(
+          message,
+          sessionId || undefined,
+          conversation.documentId
+        );
+
+        const newSessionId = getSessionId(aiResponse);
+        if (newSessionId && newSessionId !== sessionId) {
+          await prisma.conversation.update({
+            where: { id: conversationId },
+            data: { sessionId: newSessionId },
+          });
+        }
     } else if (mode === 'AGENTIC') {
-      const sessionId = conversation.sessionId;
-      aiResponse = await pythonBackendService.agentChat(
-        message,
-        sessionId || undefined
-      );
+        const sessionId = conversation.sessionId;
+        aiResponse = await pythonBackendService.agentChat(
+          message,
+          sessionId || undefined
+        );
 
       const newSessionId = getSessionId(aiResponse);
       if (newSessionId && newSessionId !== sessionId) {
@@ -329,9 +330,8 @@ class ChatService {
         });
       }
     } else {
-      // Format conversation history for Python backend
       const history = conversation.messages.map(msg => ({
-        role: msg.role.toLowerCase(), // Convert USER/ASSISTANT to user/assistant
+        role: msg.role.toLowerCase(), 
         content: msg.content
       }));
       aiResponse = await pythonBackendService.chat(message, history, conversation.summary || null);
@@ -367,16 +367,17 @@ class ChatService {
       },
     });
 
-    if (mode === 'NORMAL' && (aiResponse as ChatResponse).updated_summary) {
+    const updatedSummary = (aiResponse as any).updated_summary;
+    if (updatedSummary && typeof updatedSummary === 'string') {
       await prisma.conversation.update({
         where: { id: conversationId },
         data: {
-          summary: (aiResponse as ChatResponse).updated_summary,
+          summary: updatedSummary,
           summaryUpdatedAt: new Date()
         }
       });
     }
-    
+
     await prisma.conversation.update({
       where: { id: conversationId },
       data: { lastMessageAt: new Date() },

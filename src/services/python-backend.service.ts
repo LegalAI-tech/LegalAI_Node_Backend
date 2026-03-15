@@ -53,7 +53,7 @@ class PythonBackendService {
       summary,
     };
 
-    const response = await this.client.post<ChatResponse>('/api/v1/chat', request);
+    const response = await this.client.post<ChatResponse>('/api/v3/chat', request);
     return response.data;
   }
 
@@ -69,7 +69,7 @@ class PythonBackendService {
     };
 
     const response = await this.client.post<AgentChatResponse>(
-      '/api/v1/agent/chat',
+      '/api/v3/agent/chat',
       request
     );
     return response.data;
@@ -108,7 +108,7 @@ class PythonBackendService {
 
   async detectLanguage(text: string): Promise<DetectLanguageResponse> {
     const response = await this.client.post<DetectLanguageResponse>(
-      '/api/v1/agent/detect-language',
+      '/api/v3/agent/detect-language',
       { text }
     );
     return response.data;
@@ -116,28 +116,28 @@ class PythonBackendService {
 
   async listTemplates(): Promise<TemplateListResponse> {
     const response = await this.client.get<TemplateListResponse>(
-      '/api/v1/generate-document/templates'
+      '/api/v3/generate-document/templates'
     );
     return response.data;
   }
 
   async getTemplateSchema(templateName: string): Promise<TemplateSchemaResponse> {
     const response = await this.client.get<TemplateSchemaResponse>(
-      `/api/v1/generate-document/templates/${encodeURIComponent(templateName)}/schema`
+      `/api/v3/generate-document/templates/${encodeURIComponent(templateName)}/schema`
     );
     return response.data;
   }
 
   async getTemplateInfo(templateName: string): Promise<TemplateDetailResponse> {
     const response = await this.client.get<TemplateDetailResponse>(
-      `/api/v1/generate-document/templates/${encodeURIComponent(templateName)}/info`
+      `/api/v3/generate-document/templates/${encodeURIComponent(templateName)}/info`
     );
     return response.data;
   }
 
   async getTemplateCriticalFields(templateName: string): Promise<TemplateCriticalFieldsResponse> {
     const response = await this.client.get<TemplateCriticalFieldsResponse>(
-      `/api/v1/generate-document/templates/${encodeURIComponent(templateName)}/critical-fields`
+      `/api/v3/generate-document/templates/${encodeURIComponent(templateName)}/critical-fields`
     );
     return response.data;
   }
@@ -152,7 +152,7 @@ class PythonBackendService {
     };
 
     const response = await this.client.post<DocGenResponse>(
-      '/api/v1/generate-document',
+      '/api/v3/generate-document',
       request
     );
     return response.data;
@@ -169,7 +169,7 @@ class PythonBackendService {
       target_lang: targetLang,
     };
 
-    const response = await this.client.post<TranslateResponse>('/api/v1/translate', request);
+    const response = await this.client.post<TranslateResponse>('/api/v3/translate', request);
     return response.data;
   }
 }

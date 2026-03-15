@@ -8,7 +8,6 @@ import notificationService from '../../../services/notification.service.js';
 import cacheService from '../../../services/cache.service.js';
 import {
   validateLawyerRegistration,
-  type ValidationError,
   validatePasswordStrength
 } from '../../../utils/validator.js';
 import {

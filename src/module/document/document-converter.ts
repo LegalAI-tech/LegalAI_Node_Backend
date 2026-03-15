@@ -253,8 +253,8 @@ function convertToTxt(htmlContent: string): Buffer {
 
 class DocumentConverterService {
   /**
-   * @param htmlContent  Raw HTML/text returned by the Python backend
-   * @param format       Target format — 'pdf' | 'docx' | 'txt'
+   * @param htmlContent  
+   * @param format       
    * @returns            { buffer, mimeType, extension }
    */
   async convert(htmlContent: string, format: ConvertFormat): Promise<ConversionResult> {
