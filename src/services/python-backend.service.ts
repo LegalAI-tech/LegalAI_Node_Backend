@@ -2,6 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import FormData from 'form-data';
 import {
   AgentChatRequest,
+  LawyerAgentChatRequest,
   AgentChatResponse,
   UploadAndChatResponse,
   ChatRequest,
@@ -20,83 +21,15 @@ import {
 class PythonBackendService {
   private client: AxiosInstance;
 
-  private getBasePathPrefixes(): string[] {
-    const rawBaseUrl = this.client.defaults.baseURL || '';
-
-    try {
-      const parsed = new URL(rawBaseUrl);
-      const normalizedPath = parsed.pathname.replace(/\/+$/, '');
-
-      if (!normalizedPath || normalizedPath === '/') {
-        return [];
-      }
-
-      const knownPrefixes = ['/api/v3', '/api/v1', '/api'];
-      return knownPrefixes.filter((prefix) =>
-        normalizedPath.toLowerCase().endsWith(prefix)
-      );
-    } catch {
-      return [];
-    }
-  }
-
-  private buildCandidatePaths(paths: string[]): string[] {
-    const candidates: string[] = [];
-    const seen = new Set<string>();
-    const basePrefixes = this.getBasePathPrefixes();
-
-    const addCandidate = (path: string) => {
-      if (!seen.has(path)) {
-        seen.add(path);
-        candidates.push(path);
-      }
-    };
-
-    for (const path of paths) {
-      addCandidate(path);
-
-      for (const prefix of basePrefixes) {
-        if (path.toLowerCase().startsWith(prefix)) {
-          const withoutPrefix = path.slice(prefix.length) || '/';
-          addCandidate(withoutPrefix.startsWith('/') ? withoutPrefix : `/${withoutPrefix}`);
-        }
-      }
-    }
-
-    return candidates;
-  }
-
-  private async postWithFallbacks<T>(
-    paths: string[],
-    data: any,
-    config?: { headers?: Record<string, string> }
-  ): Promise<T> {
-    let lastError: any;
-
-    const candidatePaths = this.buildCandidatePaths(paths);
-
-    for (const path of candidatePaths) {
-      try {
-        const response = await this.client.post<T>(path, data, config);
-        return response.data;
-      } catch (error: any) {
-        const status = error?.response?.status;
-        if (status === 404) {
-          lastError = error;
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    throw lastError;
-  }
-
   constructor() {
     const timeout = parseInt(process.env.PYTHON_BACKEND_TIMEOUT || '180000'); // 180s default
+    const rawBaseUrl = (process.env.PYTHON_BACKEND_URL || '').trim().replace(/\/+$/, '');
+    const baseURL = /\/api\/v\d+$/i.test(rawBaseUrl)
+      ? rawBaseUrl
+      : `${rawBaseUrl}/api/v3`;
 
     this.client = axios.create({
-      baseURL: process.env.PYTHON_BACKEND_URL,
+      baseURL,
       timeout: timeout,
       headers: {
         'Content-Type': 'application/json',
@@ -117,33 +50,47 @@ class PythonBackendService {
 
   async chat(prompt: string, 
     history: Array<{ role: string; content: string }> = [], 
-    summary: string | null = null
+    summary?: string | null,
+    options?: { input_language?: string; output_language?: string }
   ): Promise<ChatResponse> {
-    const request: ChatRequest = {
+    const request: any = {
       prompt,
       history,
-      summary,
     };
 
-    const response = await this.client.post<ChatResponse>('/api/v3/chat', request);
-    return response.data;
+    if (summary) {
+      request.summary = summary;
+    }
+
+    if (options?.input_language) request.input_language = options.input_language;
+    if (options?.output_language) request.output_language = options.output_language;
+
+    try {
+      const response = await this.client.post<ChatResponse>('/chat', request);
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.data) {
+        console.error('Python backend /chat 422 error detail:', JSON.stringify(error.response.data, null, 2));
+        throw new Error(`Python backend validation error (422) in /chat: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
   }
 
   async agentChat(
     message: string,
     sessionId?: string,
-    documentId?: string
+    documentId?: string,
+    previousSummary?: string | null
   ): Promise<AgentChatResponse> {
-    const request: AgentChatRequest = {
-      message,
-      session_id: sessionId || '',
-      document_id: documentId || '',
+    const request: any = {
+      query: message,
     };
+    if (sessionId) request.session_id = sessionId;
+    if (documentId) request.document_id = documentId;
+    if (previousSummary) request.previous_summary = previousSummary;
 
-    const response = await this.client.post<AgentChatResponse>(
-      '/api/v3/agent/chat',
-      request
-    );
+    const response = await this.client.post<AgentChatResponse>('/agent/chat', request);
     return response.data;
   }
 
@@ -153,79 +100,90 @@ class PythonBackendService {
     initialMessage: string = 'Please analyze this document',
     sessionId?: string,
     inputLanguage?: string,
-    outputLanguage?: string
+    outputLanguage?: string,
+    previousSummary?: string | null
   ): Promise<UploadAndChatResponse> {
     const formData = new FormData();
     formData.append('file', file, fileName);
-    formData.append('initial_message', initialMessage);
+    formData.append('query', initialMessage);
     if (sessionId) {
       formData.append('session_id', sessionId);
     }
-    if (inputLanguage) {
-      formData.append('input_language', inputLanguage);
-    }
-    if (outputLanguage) {
-      formData.append('output_language', outputLanguage);
+    if (previousSummary) {
+      formData.append('previous_summary', previousSummary);
     }
 
-    return this.postWithFallbacks<UploadAndChatResponse>(
-      [
-        '/api/v3/agent/upload-and-chat',
-        '/api/v1/agent/upload-and-chat',
-        '/api/v3/upload-and-chat',
-        '/api/v1/upload-and-chat',
-        '/agent/upload-and-chat',
-        '/upload-and-chat',
-      ],
+    const response = await this.client.post<UploadAndChatResponse>(
+      '/agent/upload-and-chat',
       formData,
       {
         headers: formData.getHeaders() as Record<string, string>,
       }
     );
+
+    return response.data;
+  }
+
+  async lawyerAgentChat(params: {
+    query: string;
+    sessionId?: string;
+    documentId?: string;
+    history?: Array<{ role: string; content: string }>;
+    previousSummary?: string | null;
+    matterId?: string;
+    workspaceMemory?: Record<string, any>;
+    conversationType?: string;
+    inputLanguage?: string;
+    outputLanguage?: string;
+  }): Promise<AgentChatResponse> {
+    const body: any = {
+      query: params.query,
+      user_role: 'LAWYER',
+    };
+
+    if (params.sessionId) body.session_id = params.sessionId;
+    if (params.documentId) body.document_id = params.documentId;
+    if (params.history) body.history = params.history;
+    if (params.previousSummary) body.previous_summary = params.previousSummary;
+    if (params.conversationType) body.conversation_type = params.conversationType;
+    if (params.matterId) body.matter_id = params.matterId;
+    if (params.workspaceMemory) body.workspace_memory = params.workspaceMemory;
+    if (params.inputLanguage) body.input_language = params.inputLanguage;
+    if (params.outputLanguage) body.output_language = params.outputLanguage;
+
+    const response = await this.client.post<AgentChatResponse>('/agent/chat', body);
+    return response.data;
   }
 
   async detectLanguage(text: string): Promise<DetectLanguageResponse> {
-    return this.postWithFallbacks<DetectLanguageResponse>(
-      [
-        '/api/v3/language/detect',
-        '/api/v3/agent/detect-language',
-        '/api/v1/agent/detect-language',
-        '/api/v3/detect-language',
-        '/api/v1/detect-language',
-        '/api/v3/translation/detect-language',
-        '/api/v1/translation/detect-language',
-        '/language/detect',
-        '/agent/detect-language',
-        '/detect-language',
-      ],
-      { text }
-    );
+    const response = await this.client.post<DetectLanguageResponse>('/language/detect', { text });
+    return response.data;
   }
 
   async listTemplates(): Promise<TemplateListResponse> {
     const response = await this.client.get<TemplateListResponse>(
-      '/api/v3/generate-document/templates'
+      '/generate-document/templates'
     );
     return response.data;
   }
 
   async getTemplateSchema(templateName: string): Promise<TemplateSchemaResponse> {
     const response = await this.client.get<TemplateSchemaResponse>(
-      `/api/v3/generate-document/templates/${encodeURIComponent(templateName)}/schema`
+      `/generate-document/templates/${encodeURIComponent(templateName)}/schema`
     );
     return response.data;
   }
 
   async getTemplateInfo(templateName: string): Promise<TemplateDetailResponse> {
     const response = await this.client.get<TemplateDetailResponse>(
-      `/api/v3/generate-document/templates/${encodeURIComponent(templateName)}/info`
+      `/generate-document/templates/${encodeURIComponent(templateName)}/info`
     );
     return response.data;
   }
 
   async getTemplateCriticalFields(templateName: string): Promise<TemplateCriticalFieldsResponse> {
     const response = await this.client.get<TemplateCriticalFieldsResponse>(
-      `/api/v3/generate-document/templates/${encodeURIComponent(templateName)}/critical-fields`
+      `/generate-document/templates/${encodeURIComponent(templateName)}/critical-fields`
     );
     return response.data;
   }
@@ -240,7 +198,7 @@ class PythonBackendService {
     };
 
     const response = await this.client.post<DocGenResponse>(
-      '/api/v3/generate-document',
+      '/generate-document',
       request
     );
     return response.data;
@@ -257,7 +215,7 @@ class PythonBackendService {
       target_lang: targetLang,
     };
 
-    const response = await this.client.post<TranslateResponse>('/api/v3/translate', request);
+    const response = await this.client.post<TranslateResponse>('/translate', request);
     return response.data;
   }
 }

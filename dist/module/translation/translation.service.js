@@ -1,6 +1,7 @@
 import prisma from '../../config/database.js';
 import pythonBackend from '../../services/python-backend.service.js';
 import cacheService from '../../services/cache.service.js';
+import { AppError } from '../../middleware/error.middleware.js';
 class TranslationService {
     async translate(userId, text, sourceLang, targetLang) {
         const cached = await cacheService.getTranslation(text, sourceLang, targetLang);
@@ -42,9 +43,14 @@ class TranslationService {
             throw new Error('Text is required for language detection');
         }
         const result = await pythonBackend.detectLanguage(text);
+        const language = result.detected_language;
+        const displayName = language; // Since schema doesn't provide display_name, use the language code
+        if (!language) {
+            throw new AppError('Language detection failed: invalid response from AI service', 502, 'LANGUAGE_DETECTION_FAILED');
+        }
         return {
-            language: result.suggested_output.language,
-            display_name: result.suggested_output.display_name,
+            language,
+            display_name: displayName,
         };
     }
     async getUserTranslations(userId) {

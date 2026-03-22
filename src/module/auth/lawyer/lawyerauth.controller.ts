@@ -46,13 +46,19 @@ class LawyerAuthController {
 
   async googleFirebase(req: Request, res: Response, next: NextFunction) {
     try {
-      const { idToken } = req.body;
+      const { idToken, phone, barNumber, barCouncilState, practiceAreas, yearsOfExperience } = req.body;
 
       if (!idToken || typeof idToken !== 'string') {
         throw new AppError('idToken is required', 400, 'MISSING_ID_TOKEN');
       }
 
-      const result = await firebaseAuthService.lawyerGoogleLogin(idToken);
+      const result = await firebaseAuthService.lawyerGoogleLogin(idToken, {
+        phone,
+        barNumber,
+        barCouncilState,
+        practiceAreas,
+        yearsOfExperience,
+      });
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }
   }

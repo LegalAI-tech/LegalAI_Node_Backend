@@ -6,6 +6,7 @@ import { generateCitizenTokens, generateTwoFaTempToken, } from '../utils/jwt.uti
 import otpService from '../services/otp.service.js';
 import notificationService from '../services/notification.service.js';
 import encryptionService from '../services/encryption.service.js';
+import { validateLawyerRegistration } from '../utils/validator.js';
 class FirebaseAuthService {
     async citizenGoogleLogin(idToken) {
         const decoded = await verifyFirebaseToken(idToken);
@@ -71,7 +72,7 @@ class FirebaseAuthService {
             refreshToken,
         };
     }
-    async lawyerGoogleLogin(idToken) {
+    async lawyerGoogleLogin(idToken, additionalData) {
         const decoded = await verifyFirebaseToken(idToken);
         const { uid, email, name, picture } = decoded;
         if (!email) {
@@ -92,18 +93,35 @@ class FirebaseAuthService {
             },
         });
         if (!lawyer) {
+            const { phone = '0000000000', barNumber = 'PENDING', barCouncilState = 'PENDING', practiceAreas = [], yearsOfExperience, } = additionalData || {};
+            const validationErrors = barNumber !== 'PENDING' && phone !== '0000000000' && barCouncilState !== 'PENDING'
+                ? validateLawyerRegistration({
+                    email,
+                    password: '', // dummy
+                    name: name || email.split('@')[0],
+                    phone,
+                    barNumber,
+                    barCouncilState,
+                })
+                : [];
+            const allFormatsPassed = validationErrors.length === 0 && barNumber !== 'PENDING';
+            const verificationStatus = allFormatsPassed ? 'AUTO_VERIFIED' : 'PENDING';
             const created = await prisma.lawyerUser.create({
                 data: {
                     email,
                     name: name || email.split('@')[0],
                     provider: 'GOOGLE',
                     providerId: uid,
-                    encryptedPhone: encryptionService.encrypt('0000000000'),
-                    encryptedBarNumber: encryptionService.encrypt('PENDING'),
-                    barCouncilState: 'PENDING',
-                    practiceAreas: [],
+                    encryptedPhone: encryptionService.encrypt(phone.replace(/\s|-/g, '')),
+                    encryptedBarNumber: encryptionService.encrypt(barNumber.trim().toUpperCase()),
+                    barCouncilState: barCouncilState.toUpperCase().replace(/\s+/g, '_'),
+                    practiceAreas,
+                    yearsOfExperience,
                     emailVerified: true,
-                    verificationStatus: 'PENDING',
+                    verificationStatus,
+                    verifiedAt: allFormatsPassed ? new Date() : null,
+                    barNumberFormatValid: allFormatsPassed,
+                    validationErrors: validationErrors.length > 0 ? validationErrors : undefined,
                     twoFactorAuth: {
                         create: {
                             method: 'EMAIL',
@@ -120,8 +138,9 @@ class FirebaseAuthService {
                 },
             });
             lawyer = created;
-            logger.info('New LawyerUser created via Google — profile incomplete', {
+            logger.info('New LawyerUser created via Google', {
                 lawyerId: lawyer.id,
+                profileComplete: verificationStatus !== 'PENDING',
             });
         }
         else if (lawyer.provider === 'LOCAL') {

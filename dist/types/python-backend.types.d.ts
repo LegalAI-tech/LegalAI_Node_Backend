@@ -1,9 +1,36 @@
 export interface AgentChatRequest {
-    message: string;
-    document_id?: string;
-    session_id?: string;
-    input_language?: string;
-    output_language?: string;
+    query: string;
+    session_id?: string | null;
+    document_id?: string | null;
+    history?: Array<{
+        role: string;
+        content: string;
+    }> | null;
+    previous_summary?: string | null;
+    conversation_id?: string | null;
+    conversation_type?: string | null;
+    user_role?: string | null;
+    matter_id?: string | null;
+    workspace_memory?: Record<string, any> | null;
+    input_language?: string | null;
+    output_language?: string | null;
+}
+export interface LawyerAgentChatRequest {
+    query: string;
+    session_id?: string | null;
+    document_id?: string | null;
+    history?: Array<{
+        role: string;
+        content: string;
+    }>;
+    previous_summary?: string | null;
+    conversation_id?: string | null;
+    conversation_type?: string | null;
+    user_role?: string | null;
+    matter_id?: string | null;
+    workspace_memory?: Record<string, any> | null;
+    input_language?: string | null;
+    output_language?: string | null;
 }
 export interface LanguageInfo {
     detected_input?: string;
@@ -13,24 +40,22 @@ export interface LanguageInfo {
 export interface AgentChatResponse {
     response: string;
     session_id: string;
-    tools_used: string[];
-    intermediate_steps: any[];
-    raw_results: any[];
-    language_info?: {
-        detected_input?: string;
-        detected_output?: string;
-    };
+    agents_used?: string[] | null;
+    execution_trace?: any[] | null;
+    updated_summary?: string;
+    agent_outputs?: Record<string, any> | null;
+    language_info?: Record<string, any> | null;
 }
 export interface UploadAndChatResponse {
-    document_id: string;
+    document_id?: string | null;
     storage_url: string;
-    agent_response: string;
+    response: string;
     session_id: string;
-    tools_used: string[];
-    intermediate_steps: any[];
-    raw_results: any[];
-    language_info?: any;
-    deduplication_info?: any;
+    agents_used?: string[] | null;
+    execution_trace?: any[] | null;
+    updated_summary?: string;
+    agent_outputs?: Record<string, any> | null;
+    language_info?: Record<string, any> | null;
 }
 export interface ChatRequest {
     prompt: string;
@@ -54,20 +79,14 @@ export interface TranslateResponse {
 }
 export interface DetectLanguageRequest {
     text: string;
+    input_language?: string | null;
+    output_language?: string | null;
 }
 export interface DetectLanguageResponse {
-    input_detection: {
-        language: string;
-        confidence: number;
-        method: string;
-        supported: boolean;
-        display_name: string;
-        alternatives: any[];
-    };
-    suggested_output: {
-        language: string;
-        display_name: string;
-    };
+    detected_language: string;
+    output_language: string;
+    detection_metadata?: Record<string, any> | null;
+    output_method?: string | null;
 }
 export interface DocGenRequest {
     template_name: string;

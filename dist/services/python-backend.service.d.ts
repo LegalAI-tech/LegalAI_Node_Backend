@@ -1,16 +1,31 @@
 import { AgentChatResponse, UploadAndChatResponse, ChatResponse, TranslateResponse, DetectLanguageResponse, DocGenResponse, TemplateListResponse, TemplateSchemaResponse, TemplateDetailResponse, TemplateCriticalFieldsResponse } from '../types/python-backend.types.js';
 declare class PythonBackendService {
     private client;
-    private getBasePathPrefixes;
-    private buildCandidatePaths;
-    private postWithFallbacks;
     constructor();
     chat(prompt: string, history?: Array<{
         role: string;
         content: string;
-    }>, summary?: string | null): Promise<ChatResponse>;
-    agentChat(message: string, sessionId?: string, documentId?: string): Promise<AgentChatResponse>;
-    agentUploadAndChat(file: Buffer, fileName: string, initialMessage?: string, sessionId?: string, inputLanguage?: string, outputLanguage?: string): Promise<UploadAndChatResponse>;
+    }>, summary?: string | null, options?: {
+        input_language?: string;
+        output_language?: string;
+    }): Promise<ChatResponse>;
+    agentChat(message: string, sessionId?: string, documentId?: string, previousSummary?: string | null): Promise<AgentChatResponse>;
+    agentUploadAndChat(file: Buffer, fileName: string, initialMessage?: string, sessionId?: string, inputLanguage?: string, outputLanguage?: string, previousSummary?: string | null): Promise<UploadAndChatResponse>;
+    lawyerAgentChat(params: {
+        query: string;
+        sessionId?: string;
+        documentId?: string;
+        history?: Array<{
+            role: string;
+            content: string;
+        }>;
+        previousSummary?: string | null;
+        matterId?: string;
+        workspaceMemory?: Record<string, any>;
+        conversationType?: string;
+        inputLanguage?: string;
+        outputLanguage?: string;
+    }): Promise<AgentChatResponse>;
     detectLanguage(text: string): Promise<DetectLanguageResponse>;
     listTemplates(): Promise<TemplateListResponse>;
     getTemplateSchema(templateName: string): Promise<TemplateSchemaResponse>;

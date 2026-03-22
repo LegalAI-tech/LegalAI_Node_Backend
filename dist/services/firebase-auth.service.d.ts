@@ -11,7 +11,13 @@ declare class FirebaseAuthService {
         accessToken: string;
         refreshToken: string;
     }>;
-    lawyerGoogleLogin(idToken: string): Promise<{
+    lawyerGoogleLogin(idToken: string, additionalData?: {
+        phone?: string;
+        barNumber?: string;
+        barCouncilState?: string;
+        practiceAreas?: string[];
+        yearsOfExperience?: number;
+    }): Promise<{
         requiresTwoFactor: boolean;
         twoFactorToken: string;
         profileComplete: boolean;
