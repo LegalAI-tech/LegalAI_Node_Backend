@@ -33,7 +33,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["email", "password", "name"]
+                "required": [
+                  "email",
+                  "password",
+                  "name"
+                ]
               }
             }
           }
@@ -90,7 +94,10 @@
                     "format": "password"
                   }
                 },
-                "required": ["email", "password"]
+                "required": [
+                  "email",
+                  "password"
+                ]
               }
             }
           }
@@ -142,7 +149,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -196,7 +205,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -273,7 +284,10 @@
                   },
                   "mode": {
                     "type": "string",
-                    "enum": ["NORMAL", "AGENTIC"]
+                    "enum": [
+                      "NORMAL",
+                      "AGENTIC"
+                    ]
                   },
                   "documentId": {
                     "type": "string"
@@ -285,7 +299,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["mode"]
+                "required": [
+                  "mode"
+                ]
               }
             }
           }
@@ -526,7 +542,10 @@
                   },
                   "mode": {
                     "type": "string",
-                    "enum": ["NORMAL", "AGENTIC"]
+                    "enum": [
+                      "NORMAL",
+                      "AGENTIC"
+                    ]
                   },
                   "file": {
                     "type": "string",
@@ -544,10 +563,16 @@
                   },
                   "mode": {
                     "type": "string",
-                    "enum": ["NORMAL", "AGENTIC"]
+                    "enum": [
+                      "NORMAL",
+                      "AGENTIC"
+                    ]
                   }
                 },
-                "required": ["message", "mode"]
+                "required": [
+                  "message",
+                  "mode"
+                ]
               }
             }
           }
@@ -625,7 +650,9 @@
                     "description": "Set to true to enable sharing and get a link, false to disable sharing"
                   }
                 },
-                "required": ["share"]
+                "required": [
+                  "share"
+                ]
               }
             }
           }
@@ -660,11 +687,11 @@
               }
             }
           },
-          "404": {
-            "description": "Conversation not found"
-          },
           "401": {
             "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Conversation not found"
           }
         }
       }
@@ -713,7 +740,10 @@
                             },
                             "mode": {
                               "type": "string",
-                              "enum": ["NORMAL", "AGENTIC"]
+                              "enum": [
+                                "NORMAL",
+                                "AGENTIC"
+                              ]
                             },
                             "createdAt": {
                               "type": "string",
@@ -729,7 +759,11 @@
                                   },
                                   "role": {
                                     "type": "string",
-                                    "enum": ["USER", "ASSISTANT", "SYSTEM"]
+                                    "enum": [
+                                      "USER",
+                                      "ASSISTANT",
+                                      "SYSTEM"
+                                    ]
                                   },
                                   "content": {
                                     "type": "string"
@@ -776,11 +810,11 @@
               }
             }
           },
-          "404": {
-            "description": "Invalid share link or shared conversation not found"
-          },
           "403": {
             "description": "Sharing is disabled for this user, conversation is no longer shared, link has expired, or view limit exceeded"
+          },
+          "404": {
+            "description": "Invalid share link or shared conversation not found"
           }
         }
       }
@@ -811,10 +845,17 @@
                   },
                   "format": {
                     "type": "string",
-                    "enum": ["pdf", "docx", "txt"]
+                    "enum": [
+                      "pdf",
+                      "docx",
+                      "txt"
+                    ]
                   }
                 },
-                "required": ["template_name", "data"]
+                "required": [
+                  "template_name",
+                  "data"
+                ]
               }
             }
           }
@@ -897,15 +938,21 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
                         "templates": {
                           "type": "array",
-                          "items": { "$ref": "#/components/schemas/TemplateInfo" }
+                          "items": {
+                            "$ref": "#/components/schemas/TemplateInfo"
+                          }
                         },
-                        "total": { "type": "integer" }
+                        "total": {
+                          "type": "integer"
+                        }
                       }
                     }
                   }
@@ -930,7 +977,9 @@
             "name": "template_name",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Template filename (e.g. vakalatnama.j2)"
           }
         ],
@@ -942,8 +991,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "data": { "$ref": "#/components/schemas/TemplateSchemaResponse" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TemplateSchemaResponse"
+                    }
                   }
                 }
               }
@@ -966,7 +1019,9 @@
             "name": "template_name",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Template filename (e.g. cheque_bounce_notice.j2)"
           }
         ],
@@ -978,8 +1033,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "data": { "$ref": "#/components/schemas/TemplateDetailResponse" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TemplateDetailResponse"
+                    }
                   }
                 }
               }
@@ -1002,7 +1061,9 @@
             "name": "template_name",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "Template filename (e.g. bail_application.j2)"
           }
         ],
@@ -1014,8 +1075,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "data": { "$ref": "#/components/schemas/TemplateCriticalFieldsResponse" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TemplateCriticalFieldsResponse"
+                    }
                   }
                 }
               }
@@ -1129,7 +1194,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["text", "sourceLang", "targetLang"]
+                "required": [
+                  "text",
+                  "sourceLang",
+                  "targetLang"
+                ]
               }
             }
           }
@@ -1175,7 +1244,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["text"]
+                "required": [
+                  "text"
+                ]
               }
             }
           }
@@ -1368,7 +1439,9 @@
     },
     "/lawyer/auth/register": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Register a new lawyer",
         "requestBody": {
           "required": true,
@@ -1377,16 +1450,44 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "password": { "type": "string", "format": "password" },
-                  "name": { "type": "string" },
-                  "phone": { "type": "string" },
-                  "barNumber": { "type": "string" },
-                  "barCouncilState": { "type": "string" },
-                  "practiceAreas": { "type": "array", "items": { "type": "string" } },
-                  "yearsOfExperience": { "type": "integer" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "barNumber": {
+                    "type": "string"
+                  },
+                  "barCouncilState": {
+                    "type": "string"
+                  },
+                  "practiceAreas": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "yearsOfExperience": {
+                    "type": "integer"
+                  }
                 },
-                "required": ["email", "password", "name", "phone", "barNumber", "barCouncilState"]
+                "required": [
+                  "email",
+                  "password",
+                  "name",
+                  "phone",
+                  "barNumber",
+                  "barCouncilState"
+                ]
               }
             }
           }
@@ -1399,15 +1500,27 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "lawyerId": { "type": "string" },
-                        "email": { "type": "string" },
-                        "name": { "type": "string" },
-                        "verificationStatus": { "type": "string" },
-                        "barCouncilState": { "type": "string" }
+                        "lawyerId": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "verificationStatus": {
+                          "type": "string"
+                        },
+                        "barCouncilState": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -1415,13 +1528,17 @@
               }
             }
           },
-          "409": { "description": "Email already in use" }
+          "409": {
+            "description": "Email already in use"
+          }
         }
       }
     },
     "/lawyer/auth/verify-email": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Verify lawyer email with OTP",
         "requestBody": {
           "required": true,
@@ -1430,23 +1547,36 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "lawyerId": { "type": "string" },
-                  "otp": { "type": "string" }
+                  "lawyerId": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
                 },
-                "required": ["lawyerId", "otp"]
+                "required": [
+                  "lawyerId",
+                  "otp"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Email verified successfully" },
-          "400": { "description": "Invalid or expired OTP" }
+          "200": {
+            "description": "Email verified successfully"
+          },
+          "400": {
+            "description": "Invalid or expired OTP"
+          }
         }
       }
     },
     "/lawyer/auth/login": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Lawyer login step 1 — returns a 2FA temporary token",
         "requestBody": {
           "required": true,
@@ -1455,10 +1585,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "password": { "type": "string", "format": "password" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
                 },
-                "required": ["email", "password"]
+                "required": [
+                  "email",
+                  "password"
+                ]
               }
             }
           }
@@ -1471,12 +1610,20 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "twoFactorToken": { "type": "string", "description": "Temporary token to be passed to verify-2fa" },
-                        "method": { "type": "string", "example": "EMAIL" }
+                        "twoFactorToken": {
+                          "type": "string",
+                          "description": "Temporary token to be passed to verify-2fa"
+                        },
+                        "method": {
+                          "type": "string",
+                          "example": "EMAIL"
+                        }
                       }
                     }
                   }
@@ -1484,14 +1631,20 @@
               }
             }
           },
-          "401": { "description": "Invalid credentials" },
-          "403": { "description": "Account locked" }
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "403": {
+            "description": "Account locked"
+          }
         }
       }
     },
     "/lawyer/auth/login/verify-2fa": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Lawyer login step 2 — verify OTP and receive tokens",
         "requestBody": {
           "required": true,
@@ -1500,10 +1653,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "twoFactorToken": { "type": "string" },
-                  "otp": { "type": "string" }
+                  "twoFactorToken": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
                 },
-                "required": ["twoFactorToken", "otp"]
+                "required": [
+                  "twoFactorToken",
+                  "otp"
+                ]
               }
             }
           }
@@ -1516,13 +1676,21 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "accessToken": { "type": "string" },
-                        "refreshToken": { "type": "string" },
-                        "lawyer": { "$ref": "#/components/schemas/LawyerUser" }
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        },
+                        "lawyer": {
+                          "$ref": "#/components/schemas/LawyerUser"
+                        }
                       }
                     }
                   }
@@ -1530,14 +1698,20 @@
               }
             }
           },
-          "400": { "description": "Invalid or expired OTP" },
-          "401": { "description": "Invalid or expired 2FA token" }
+          "400": {
+            "description": "Invalid or expired OTP"
+          },
+          "401": {
+            "description": "Invalid or expired 2FA token"
+          }
         }
       }
     },
     "/lawyer/auth/google/firebase": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Lawyer login/register via Google (Firebase ID token)",
         "requestBody": {
           "required": true,
@@ -1546,9 +1720,14 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "idToken": { "type": "string", "description": "Firebase ID token obtained from Google sign-in" }
+                  "idToken": {
+                    "type": "string",
+                    "description": "Firebase ID token obtained from Google sign-in"
+                  }
                 },
-                "required": ["idToken"]
+                "required": [
+                  "idToken"
+                ]
               }
             }
           }
@@ -1561,13 +1740,21 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "accessToken": { "type": "string" },
-                        "refreshToken": { "type": "string" },
-                        "lawyer": { "$ref": "#/components/schemas/LawyerUser" }
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        },
+                        "lawyer": {
+                          "$ref": "#/components/schemas/LawyerUser"
+                        }
                       }
                     }
                   }
@@ -1580,7 +1767,9 @@
     },
     "/lawyer/auth/refresh": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Refresh lawyer access token",
         "requestBody": {
           "required": true,
@@ -1589,9 +1778,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "refreshToken": { "type": "string" }
+                  "refreshToken": {
+                    "type": "string"
+                  }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -1604,12 +1797,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "accessToken": { "type": "string" },
-                        "refreshToken": { "type": "string" }
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -1617,15 +1816,23 @@
               }
             }
           },
-          "401": { "description": "Invalid or expired refresh token" }
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
         }
       }
     },
     "/lawyer/auth/logout": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Logout a lawyer",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1633,9 +1840,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "refreshToken": { "type": "string" }
+                  "refreshToken": {
+                    "type": "string"
+                  }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -1648,8 +1859,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1660,7 +1875,9 @@
     },
     "/lawyer/auth/forgot-password": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Request a password reset OTP for a lawyer",
         "requestBody": {
           "required": true,
@@ -1669,21 +1886,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
                 },
-                "required": ["email"]
+                "required": [
+                  "email"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Password reset OTP sent to email if account exists" }
+          "200": {
+            "description": "Password reset OTP sent to email if account exists"
+          }
         }
       }
     },
     "/lawyer/auth/reset-password": {
       "post": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Reset lawyer password using OTP",
         "requestBody": {
           "required": true,
@@ -1692,26 +1918,48 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "otp": { "type": "string" },
-                  "newPassword": { "type": "string", "format": "password" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password"
+                  }
                 },
-                "required": ["email", "otp", "newPassword"]
+                "required": [
+                  "email",
+                  "otp",
+                  "newPassword"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Password reset successfully" },
-          "400": { "description": "Invalid or expired OTP" }
+          "200": {
+            "description": "Password reset successfully"
+          },
+          "400": {
+            "description": "Invalid or expired OTP"
+          }
         }
       }
     },
     "/lawyer/auth/me": {
       "get": {
-        "tags": ["Lawyer Auth"],
+        "tags": [
+          "Lawyer Auth"
+        ],
         "summary": "Get authenticated lawyer's profile",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Lawyer profile",
@@ -1720,8 +1968,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "data": { "$ref": "#/components/schemas/LawyerUser" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/LawyerUser"
+                    }
                   }
                 }
               }
@@ -1732,7 +1984,9 @@
     },
     "/firm/auth/register": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Register a new law firm",
         "requestBody": {
           "required": true,
@@ -1741,18 +1995,50 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "password": { "type": "string", "format": "password" },
-                  "name": { "type": "string", "description": "Contact person's name" },
-                  "firmName": { "type": "string" },
-                  "phone": { "type": "string" },
-                  "registrationNumber": { "type": "string" },
-                  "gstNumber": { "type": "string" },
-                  "city": { "type": "string" },
-                  "state": { "type": "string" },
-                  "address": { "type": "string" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Contact person's name"
+                  },
+                  "firmName": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "registrationNumber": {
+                    "type": "string"
+                  },
+                  "gstNumber": {
+                    "type": "string"
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "address": {
+                    "type": "string"
+                  }
                 },
-                "required": ["email", "password", "name", "firmName", "phone", "registrationNumber", "city", "state"]
+                "required": [
+                  "email",
+                  "password",
+                  "name",
+                  "firmName",
+                  "phone",
+                  "registrationNumber",
+                  "city",
+                  "state"
+                ]
               }
             }
           }
@@ -1765,14 +2051,24 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "firmId": { "type": "string" },
-                        "email": { "type": "string" },
-                        "firmName": { "type": "string" },
-                        "verificationStatus": { "type": "string" }
+                        "firmId": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string"
+                        },
+                        "firmName": {
+                          "type": "string"
+                        },
+                        "verificationStatus": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -1780,13 +2076,17 @@
               }
             }
           },
-          "409": { "description": "Email already in use" }
+          "409": {
+            "description": "Email already in use"
+          }
         }
       }
     },
     "/firm/auth/verify-email": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Verify firm email with OTP",
         "requestBody": {
           "required": true,
@@ -1795,23 +2095,36 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "firmId": { "type": "string" },
-                  "otp": { "type": "string" }
+                  "firmId": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
                 },
-                "required": ["firmId", "otp"]
+                "required": [
+                  "firmId",
+                  "otp"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Email verified successfully" },
-          "400": { "description": "Invalid or expired OTP" }
+          "200": {
+            "description": "Email verified successfully"
+          },
+          "400": {
+            "description": "Invalid or expired OTP"
+          }
         }
       }
     },
     "/firm/auth/login": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Firm login step 1 — returns a 2FA temporary token",
         "requestBody": {
           "required": true,
@@ -1820,10 +2133,19 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "password": { "type": "string", "format": "password" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password"
+                  }
                 },
-                "required": ["email", "password"]
+                "required": [
+                  "email",
+                  "password"
+                ]
               }
             }
           }
@@ -1836,12 +2158,20 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "twoFactorToken": { "type": "string", "description": "Temporary token to be passed to verify-2fa" },
-                        "method": { "type": "string", "example": "EMAIL" }
+                        "twoFactorToken": {
+                          "type": "string",
+                          "description": "Temporary token to be passed to verify-2fa"
+                        },
+                        "method": {
+                          "type": "string",
+                          "example": "EMAIL"
+                        }
                       }
                     }
                   }
@@ -1849,14 +2179,20 @@
               }
             }
           },
-          "401": { "description": "Invalid credentials" },
-          "403": { "description": "Account locked" }
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "403": {
+            "description": "Account locked"
+          }
         }
       }
     },
     "/firm/auth/login/verify-2fa": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Firm login step 2 — verify OTP and receive tokens",
         "requestBody": {
           "required": true,
@@ -1865,10 +2201,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "twoFactorToken": { "type": "string" },
-                  "otp": { "type": "string" }
+                  "twoFactorToken": {
+                    "type": "string"
+                  },
+                  "otp": {
+                    "type": "string"
+                  }
                 },
-                "required": ["twoFactorToken", "otp"]
+                "required": [
+                  "twoFactorToken",
+                  "otp"
+                ]
               }
             }
           }
@@ -1881,13 +2224,21 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "accessToken": { "type": "string" },
-                        "refreshToken": { "type": "string" },
-                        "firm": { "$ref": "#/components/schemas/FirmUser" }
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        },
+                        "firm": {
+                          "$ref": "#/components/schemas/FirmUser"
+                        }
                       }
                     }
                   }
@@ -1895,14 +2246,20 @@
               }
             }
           },
-          "400": { "description": "Invalid or expired OTP" },
-          "401": { "description": "Invalid or expired 2FA token" }
+          "400": {
+            "description": "Invalid or expired OTP"
+          },
+          "401": {
+            "description": "Invalid or expired 2FA token"
+          }
         }
       }
     },
     "/firm/auth/refresh": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Refresh firm access token",
         "requestBody": {
           "required": true,
@@ -1911,9 +2268,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "refreshToken": { "type": "string" }
+                  "refreshToken": {
+                    "type": "string"
+                  }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -1926,12 +2287,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "data": {
                       "type": "object",
                       "properties": {
-                        "accessToken": { "type": "string" },
-                        "refreshToken": { "type": "string" }
+                        "accessToken": {
+                          "type": "string"
+                        },
+                        "refreshToken": {
+                          "type": "string"
+                        }
                       }
                     }
                   }
@@ -1939,15 +2306,23 @@
               }
             }
           },
-          "401": { "description": "Invalid or expired refresh token" }
+          "401": {
+            "description": "Invalid or expired refresh token"
+          }
         }
       }
     },
     "/firm/auth/logout": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Logout a firm",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1955,9 +2330,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "refreshToken": { "type": "string" }
+                  "refreshToken": {
+                    "type": "string"
+                  }
                 },
-                "required": ["refreshToken"]
+                "required": [
+                  "refreshToken"
+                ]
               }
             }
           }
@@ -1970,8 +2349,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1982,7 +2365,9 @@
     },
     "/firm/auth/forgot-password": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Request a password reset OTP for a firm",
         "requestBody": {
           "required": true,
@@ -1991,21 +2376,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
                 },
-                "required": ["email"]
+                "required": [
+                  "email"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Password reset OTP sent to email if account exists" }
+          "200": {
+            "description": "Password reset OTP sent to email if account exists"
+          }
         }
       }
     },
     "/firm/auth/reset-password": {
       "post": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Reset firm password using OTP",
         "requestBody": {
           "required": true,
@@ -2014,26 +2408,48 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "email": { "type": "string", "format": "email" },
-                  "otp": { "type": "string" },
-                  "newPassword": { "type": "string", "format": "password" }
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "otp": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "format": "password"
+                  }
                 },
-                "required": ["email", "otp", "newPassword"]
+                "required": [
+                  "email",
+                  "otp",
+                  "newPassword"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Password reset successfully" },
-          "400": { "description": "Invalid or expired OTP" }
+          "200": {
+            "description": "Password reset successfully"
+          },
+          "400": {
+            "description": "Invalid or expired OTP"
+          }
         }
       }
     },
     "/firm/auth/me": {
       "get": {
-        "tags": ["Firm Auth"],
+        "tags": [
+          "Firm Auth"
+        ],
         "summary": "Get authenticated firm's profile",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Firm profile",
@@ -2042,12 +2458,928 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "data": { "$ref": "#/components/schemas/FirmUser" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/FirmUser"
+                    }
                   }
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/lawyer/chat/conversations": {
+      "get": {
+        "summary": "List lawyer conversations",
+        "tags": [
+          "Lawyer Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LawyerConversation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a conversation",
+        "tags": [
+          "Lawyer Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerConversation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/comms/generate": {
+      "post": {
+        "summary": "Generate client communications",
+        "tags": [
+          "Lawyer Comms"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Communication generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "generatedContent": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/contract/review": {
+      "post": {
+        "summary": "Review a contract document",
+        "tags": [
+          "Lawyer Contracts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contract reviewed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "review": {
+                      "type": "string"
+                    },
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/documents": {
+      "get": {
+        "summary": "List matter documents",
+        "tags": [
+          "Lawyer Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "matterId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LawyerDocument"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload document for matter",
+        "tags": [
+          "Lawyer Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "matterId": {
+                    "type": "string"
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerDocument"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/events": {
+      "get": {
+        "summary": "List events",
+        "tags": [
+          "Lawyer Events"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LawyerEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create an event",
+        "tags": [
+          "Lawyer Events"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "matterId": {
+                    "type": "string"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerEvent"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/deadlines": {
+      "get": {
+        "summary": "Get upcoming deadlines",
+        "tags": [
+          "Lawyer Deadlines"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LawyerEvent"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/matter": {
+      "get": {
+        "summary": "List matters",
+        "tags": [
+          "Lawyer Matters"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LawyerMatter"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a matter",
+        "tags": [
+          "Lawyer Matters"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerMatter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lawyer/chat/conversations/{conversationId}": {
+      "get": {
+        "summary": "Get a specific conversation",
+        "tags": [
+          "Lawyer Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the conversation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerConversation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a conversation",
+        "tags": [
+          "Lawyer Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the conversation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation deleted successfully"
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        }
+      }
+    },
+    "/lawyer/chat/conversations/{conversationId}/messages": {
+      "get": {
+        "summary": "Get messages for a conversation",
+        "tags": [
+          "Lawyer Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the conversation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LawyerMessage"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        }
+      },
+      "post": {
+        "summary": "Send a message in a conversation",
+        "tags": [
+          "Lawyer Chat"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the conversation"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "user",
+                      "system"
+                    ]
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerMessage"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found"
+          }
+        }
+      }
+    },
+    "/lawyer/matter/{matterId}": {
+      "get": {
+        "summary": "Get a specific matter",
+        "tags": [
+          "Lawyer Matters"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "matterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the matter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerMatter"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Matter not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a matter",
+        "tags": [
+          "Lawyer Matters"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "matterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the matter"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Matter updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerMatter"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Matter not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Archive a matter",
+        "tags": [
+          "Lawyer Matters"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "matterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the matter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matter archived successfully"
+          },
+          "404": {
+            "description": "Matter not found"
+          }
+        }
+      }
+    },
+    "/lawyer/events/{eventId}": {
+      "get": {
+        "summary": "Get a specific event",
+        "tags": [
+          "Lawyer Events"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the event"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerEvent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update an event",
+        "tags": [
+          "Lawyer Events"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the event"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "dueDate": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "completed": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerEvent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete an event",
+        "tags": [
+          "Lawyer Events"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the event"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event deleted successfully"
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        }
+      }
+    },
+    "/lawyer/events/{eventId}/complete": {
+      "post": {
+        "summary": "Mark an event as completed",
+        "tags": [
+          "Lawyer Events"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the event"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event marked as completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LawyerEvent"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        }
+      }
+    },
+    "/lawyer/documents/{docId}": {
+      "delete": {
+        "summary": "Delete a document",
+        "tags": [
+          "Lawyer Documents"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "docId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the document"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document deleted successfully"
+          },
+          "404": {
+            "description": "Document not found"
           }
         }
       }
@@ -2076,7 +3408,11 @@
           },
           "provider": {
             "type": "string",
-            "enum": ["LOCAL", "GOOGLE", "META"],
+            "enum": [
+              "LOCAL",
+              "GOOGLE",
+              "META"
+            ],
             "default": "LOCAL"
           },
           "shareEnabled": {
@@ -2113,7 +3449,10 @@
           },
           "mode": {
             "type": "string",
-            "enum": ["NORMAL", "AGENTIC"]
+            "enum": [
+              "NORMAL",
+              "AGENTIC"
+            ]
           },
           "documentId": {
             "type": "string",
@@ -2175,7 +3514,11 @@
           },
           "role": {
             "type": "string",
-            "enum": ["USER", "ASSISTANT", "SYSTEM"]
+            "enum": [
+              "USER",
+              "ASSISTANT",
+              "SYSTEM"
+            ]
           },
           "content": {
             "type": "string"
@@ -2291,120 +3634,404 @@
       "LawyerUser": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "email": { "type": "string", "format": "email" },
-          "name": { "type": "string" },
-          "provider": { "type": "string", "enum": ["LOCAL", "GOOGLE", "META"], "default": "LOCAL" },
-          "emailVerified": { "type": "boolean", "default": false },
-          "phoneVerified": { "type": "boolean", "default": false },
-          "barCouncilState": { "type": "string" },
-          "practiceAreas": { "type": "array", "items": { "type": "string" } },
-          "yearsOfExperience": { "type": "integer", "nullable": true },
-          "barNumberFormatValid": { "type": "boolean", "default": false },
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "LOCAL",
+              "GOOGLE",
+              "META"
+            ],
+            "default": "LOCAL"
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "default": false
+          },
+          "phoneVerified": {
+            "type": "boolean",
+            "default": false
+          },
+          "barCouncilState": {
+            "type": "string"
+          },
+          "practiceAreas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "yearsOfExperience": {
+            "type": "integer",
+            "nullable": true
+          },
+          "barNumberFormatValid": {
+            "type": "boolean",
+            "default": false
+          },
           "verificationStatus": {
             "type": "string",
-            "enum": ["PENDING", "AUTO_VERIFIED", "FORMAT_FAILED", "MANUALLY_VERIFIED", "REJECTED"],
+            "enum": [
+              "PENDING",
+              "AUTO_VERIFIED",
+              "FORMAT_FAILED",
+              "MANUALLY_VERIFIED",
+              "REJECTED"
+            ],
             "default": "PENDING"
           },
-          "verifiedAt": { "type": "string", "format": "date-time", "nullable": true },
-          "isLocked": { "type": "boolean", "default": false },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" },
-          "lastLoginAt": { "type": "string", "format": "date-time", "nullable": true }
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isLocked": {
+            "type": "boolean",
+            "default": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
       "FirmUser": {
         "type": "object",
         "properties": {
-          "id": { "type": "string" },
-          "email": { "type": "string", "format": "email" },
-          "name": { "type": "string", "description": "Contact person's name" },
-          "firmName": { "type": "string" },
-          "city": { "type": "string" },
-          "state": { "type": "string" },
-          "address": { "type": "string", "nullable": true },
-          "domain": { "type": "string", "nullable": true },
-          "domainVerified": { "type": "boolean", "default": false },
-          "emailVerified": { "type": "boolean", "default": false },
-          "phoneVerified": { "type": "boolean", "default": false },
-          "registrationFormatValid": { "type": "boolean", "default": false },
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "description": "Contact person's name"
+          },
+          "firmName": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "domain": {
+            "type": "string",
+            "nullable": true
+          },
+          "domainVerified": {
+            "type": "boolean",
+            "default": false
+          },
+          "emailVerified": {
+            "type": "boolean",
+            "default": false
+          },
+          "phoneVerified": {
+            "type": "boolean",
+            "default": false
+          },
+          "registrationFormatValid": {
+            "type": "boolean",
+            "default": false
+          },
           "verificationStatus": {
             "type": "string",
-            "enum": ["PENDING", "AUTO_VERIFIED", "FORMAT_FAILED", "MANUALLY_VERIFIED", "REJECTED"],
+            "enum": [
+              "PENDING",
+              "AUTO_VERIFIED",
+              "FORMAT_FAILED",
+              "MANUALLY_VERIFIED",
+              "REJECTED"
+            ],
             "default": "PENDING"
           },
-          "verifiedAt": { "type": "string", "format": "date-time", "nullable": true },
-          "isLocked": { "type": "boolean", "default": false },
-          "knownIpAddresses": { "type": "array", "items": { "type": "string" } },
-          "createdAt": { "type": "string", "format": "date-time" },
-          "updatedAt": { "type": "string", "format": "date-time" },
-          "lastLoginAt": { "type": "string", "format": "date-time", "nullable": true }
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "isLocked": {
+            "type": "boolean",
+            "default": false
+          },
+          "knownIpAddresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLoginAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
         }
       },
       "TemplateInfo": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "display_name": { "type": "string" },
-          "description": { "type": "string" },
-          "category": { "type": "string" }
+          "name": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          }
         }
       },
       "TemplateSchemaField": {
         "type": "object",
         "properties": {
-          "name": { "type": "string" },
-          "type": { "type": "string" },
-          "required": { "type": "boolean" },
-          "critical": { "type": "boolean" },
-          "description": { "type": "string" },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "critical": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
           "default": {},
-          "examples": { "type": "array", "items": {} }
+          "examples": {
+            "type": "array",
+            "items": {}
+          }
         }
       },
       "TemplateSchemaResponse": {
         "type": "object",
         "properties": {
-          "template_name": { "type": "string" },
+          "template_name": {
+            "type": "string"
+          },
           "critical_fields": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/TemplateSchemaField" }
+            "items": {
+              "$ref": "#/components/schemas/TemplateSchemaField"
+            }
           },
           "optional_fields": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/TemplateSchemaField" }
+            "items": {
+              "$ref": "#/components/schemas/TemplateSchemaField"
+            }
           },
           "all_fields": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/TemplateSchemaField" }
+            "items": {
+              "$ref": "#/components/schemas/TemplateSchemaField"
+            }
           }
         }
       },
       "TemplateDetailResponse": {
         "type": "object",
         "properties": {
-          "template_name": { "type": "string" },
+          "template_name": {
+            "type": "string"
+          },
           "metadata": {
             "type": "object",
             "properties": {
-              "title": { "type": "string" },
-              "description": { "type": "string" },
-              "category": { "type": "string" },
-              "version": { "type": "string" },
-              "author": { "type": "string" }
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "category": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "author": {
+                "type": "string"
+              }
             },
             "additionalProperties": true
           },
-          "schema": { "$ref": "#/components/schemas/TemplateSchemaResponse" }
+          "schema": {
+            "$ref": "#/components/schemas/TemplateSchemaResponse"
+          }
         }
       },
       "TemplateCriticalFieldsResponse": {
         "type": "object",
         "properties": {
-          "template_name": { "type": "string" },
+          "template_name": {
+            "type": "string"
+          },
           "critical_fields": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "LawyerConversation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lawyerId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LawyerMessage": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "system"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LawyerMatter": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "lawyerId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "LawyerEvent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "matterId": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LawyerDocument": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "matterId": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

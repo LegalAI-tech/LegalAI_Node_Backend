@@ -40,6 +40,7 @@ export interface AgentChatResponse {
   agents_used?: string[] | null;
   execution_trace?: any[] | null;
   updated_summary?: string;
+  workspace_updates?: Record<string, any> | null;
   agent_outputs?: Record<string, any> | null;
   language_info?: Record<string, any> | null;
 }
