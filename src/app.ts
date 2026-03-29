@@ -13,11 +13,11 @@ import chatRoutes from './module/citizen/chat/chat.route.js';
 import documentRoutes from './module/document/document.route.js';
 import translationRoutes from './module/translation/translation.route.js';
 import userRoutes from './module/citizen/user/user.route.js';
+
 import lawyerChatRoutes from './module/lawyer/chat/lawyer-chat.route.js';
 import clientCommsRoutes from './module/lawyer/comms/client-comms.route.js';
 import contractReviewRoutes from './module/lawyer/contract/contract-review.route.js';
-import matterDocumentRoutes from './module/lawyer/document/matter-document.route.js';
-import { matterEventRouter, deadlineRouter } from './module/lawyer/events/matter-event.route.js';
+import { deadlineRouter } from './module/lawyer/events/matter-event.route.js';
 import matterRoutes from './module/lawyer/matter/matter.route.js';
 
 const app: Application = express();
@@ -70,8 +70,6 @@ app.use('/api/lawyer/auth', lawyerAuthRoutes);
 app.use('/api/lawyer/chat', lawyerChatRoutes);
 app.use('/api/lawyer/comms', clientCommsRoutes);
 app.use('/api/lawyer/contract', contractReviewRoutes);
-app.use('/api/lawyer/documents', matterDocumentRoutes);
-app.use('/api/lawyer/events', matterEventRouter);
 app.use('/api/lawyer/deadlines', deadlineRouter);
 app.use('/api/lawyer/matter', matterRoutes);
 
