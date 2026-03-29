@@ -121,24 +121,24 @@ class WorkspaceMemoryService {
 
     const currentMemory = matter.memory;
 
-    const summarisationQuery = `
-You are a legal AI assistant updating the workspace memory for a legal matter.
+          const summarisationQuery = `
+      You are a legal AI assistant updating the workspace memory for a legal matter.
 
-CURRENT WORKSPACE MEMORY:
-- Parties: ${currentMemory.partySummary || 'Not set'}
-- Legal Issues: ${currentMemory.legalIssues || 'Not set'}
-- Fact Chronology: ${currentMemory.factChronology || 'Not set'}
-- Lawyer Notes: ${currentMemory.lawyerNotes || 'Not set'}
+      CURRENT WORKSPACE MEMORY:
+      - Parties: ${currentMemory.partySummary || 'Not set'}
+      - Legal Issues: ${currentMemory.legalIssues || 'Not set'}
+      - Fact Chronology: ${currentMemory.factChronology || 'Not set'}
+      - Lawyer Notes: ${currentMemory.lawyerNotes || 'Not set'}
 
-RECENT DOCUMENTS:
-${docContext || 'No documents yet.'}
+      RECENT DOCUMENTS:
+      ${docContext || 'No documents yet.'}
 
-RECENT CONVERSATIONS:
-${convContext || 'No conversations yet.'}
+      RECENT CONVERSATIONS:
+      ${convContext || 'No conversations yet.'}
 
-Based on all of the above, write a concise, structured AI summary of this legal matter (max 400 words).
-Cover: key parties, core legal issues, current stage, and important next steps if apparent.
-`.trim();
+      Based on all of the above, write a concise, structured AI summary of this legal matter (max 400 words).
+      Cover: key parties, core legal issues, current stage, and important next steps if apparent.
+      `.trim();
 
     try {
       const result = await pythonBackendService.lawyerAgentChat({
