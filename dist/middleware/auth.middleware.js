@@ -191,4 +191,60 @@ export const authenticateLawyerOrFirm = async (req, res, next) => {
         code: 'WRONG_USER_TYPE',
     });
 };
+// Add this to the very bottom of auth.middleware.ts
+export const authenticateUniversal = async (req, res, next) => {
+    const token = extractBearerToken(req, res);
+    if (!token)
+        return;
+    const decoded = verifyJwt(token, res);
+    if (!decoded)
+        return;
+    try {
+        if (decoded.userType === 'CITIZEN') {
+            const user = await prisma.user.findUnique({
+                where: { id: decoded.sub },
+                select: { id: true, email: true, name: true, avatar: true, provider: true },
+            });
+            if (user) {
+                req.user = user;
+                return next();
+            }
+        }
+        if (decoded.userType === 'LAWYER') {
+            const lawyer = await prisma.lawyerUser.findUnique({
+                where: { id: decoded.sub }
+            });
+            if (lawyer) {
+                req.user = {
+                    id: lawyer.id,
+                    email: lawyer.email,
+                    name: lawyer.name,
+                    avatar: null,
+                    provider: 'lawyer',
+                };
+                return next();
+            }
+        }
+        if (decoded.userType === 'FIRM_ADMIN') {
+            const firm = await prisma.firmUser.findUnique({
+                where: { id: decoded.sub }
+            });
+            if (firm) {
+                req.user = {
+                    id: firm.id,
+                    email: firm.email,
+                    name: firm.name,
+                    avatar: null,
+                    provider: 'firm',
+                };
+                return next();
+            }
+        }
+        res.status(401).json({ success: false, message: 'Account not found.', code: 'USER_NOT_FOUND' });
+    }
+    catch (error) {
+        logger.error('Universal auth middleware error', error);
+        res.status(500).json({ success: false, message: 'Authentication error.', code: 'AUTH_ERROR' });
+    }
+};
 //# sourceMappingURL=auth.middleware.js.map

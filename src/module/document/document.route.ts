@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import documentController from './document.controller.js';
-import { authenticate, type AuthRequest } from '../../middleware/auth.middleware.js';
+import { authenticateUniversal, type AuthRequest } from '../../middleware/auth.middleware.js';
 import { body, param, validationResult } from 'express-validator';
 
 const router = Router();
 
-
-router.use(authenticate);
+router.use(authenticateUniversal);
 
 const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
@@ -35,7 +34,6 @@ const generateDocumentValidation = [
     .isIn(['pdf', 'docx', 'txt'])
     .withMessage('Format must be one of: pdf, docx, txt'),
 ];
-
 
 const templateNameValidation = [
   param('template_name')
@@ -88,13 +86,11 @@ router.post(
     documentController.generateDocument(req as AuthRequest, res, next)
 );
 
-
 router.get(
   '/',
   (req: Request, res: Response, next: NextFunction) =>
     documentController.getDocuments(req as AuthRequest, res, next)
 );
-
 
 router.get(
   '/:id',
@@ -104,7 +100,6 @@ router.get(
     documentController.getDocument(req as AuthRequest, res, next)
 );
 
-
 router.delete(
   '/:id',
   documentIdValidation,
@@ -112,7 +107,6 @@ router.delete(
   (req: Request, res: Response, next: NextFunction) =>
     documentController.deleteDocument(req as AuthRequest, res, next)
 );
-
 
 router.get(
   '/:id/download',

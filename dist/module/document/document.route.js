@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import documentController from './document.controller.js';
-import { authenticate } from '../../middleware/auth.middleware.js';
+import { authenticateUniversal } from '../../middleware/auth.middleware.js';
 import { body, param, validationResult } from 'express-validator';
 const router = Router();
-router.use(authenticate);
+router.use(authenticateUniversal);
 const validateRequest = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

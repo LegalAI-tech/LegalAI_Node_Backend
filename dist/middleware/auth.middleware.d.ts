@@ -38,4 +38,5 @@ export declare const authenticateLawyer: (req: Request, res: Response, next: Nex
 export declare const authenticateFirm: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const authenticateAdmin: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const authenticateLawyerOrFirm: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+export declare const authenticateUniversal: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 //# sourceMappingURL=auth.middleware.d.ts.map
