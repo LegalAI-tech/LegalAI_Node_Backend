@@ -19,7 +19,7 @@ const upload = multer({
             : cb(new Error('Invalid file type. Allowed: PDF, DOC, DOCX, TXT.'));
     },
 });
-router.post('/', upload.array('file'), matterDocumentController.uploadDocument);
+router.post('/', upload.single('file'), matterDocumentController.uploadDocument);
 router.get('/', matterDocumentController.listDocuments);
 router.delete('/:docId', matterDocumentController.deleteDocument);
 export default router;

@@ -64,6 +64,9 @@ class MatterDocumentService {
                     aiSummary,
                 })
                     .catch(err => logger.warn('Failed to append doc to memory index', { matterId, docId: doc.id, err }));
+                workspaceMemoryService.regenerateAiSummary(lawyerId, matterId).catch(err => {
+                    logger.error('Failed to auto-regenerate memory after document upload', { matterId, err });
+                });
             }
             logger.info('MatterDocument uploaded and indexed', {
                 lawyerId, matterId, docId: doc.id, vectorDocId,

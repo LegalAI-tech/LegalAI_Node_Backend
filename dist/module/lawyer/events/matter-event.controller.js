@@ -3,7 +3,10 @@ class MatterEventController {
     async createEvent(req, res, next) {
         try {
             const lawyerId = req.lawyer.id;
-            const { matterId } = req.params;
+            const matterId = req.params.matterId || req.body.matterId;
+            if (!matterId) {
+                return res.status(400).json({ success: false, message: 'matterId is required' });
+            }
             const event = await matterEventService.createEvent(lawyerId, matterId, req.body);
             res.status(201).json({ success: true, data: event });
         }
@@ -14,7 +17,10 @@ class MatterEventController {
     async listEvents(req, res, next) {
         try {
             const lawyerId = req.lawyer.id;
-            const { matterId } = req.params;
+            const matterId = req.params.matterId || req.query.matterId;
+            if (!matterId) {
+                return res.status(400).json({ success: false, message: 'matterId is required' });
+            }
             const { status, isDeadline, upcoming } = req.query;
             const events = await matterEventService.listEvents(lawyerId, matterId, {
                 status,
@@ -30,7 +36,11 @@ class MatterEventController {
     async getEvent(req, res, next) {
         try {
             const lawyerId = req.lawyer.id;
-            const { matterId, eventId } = req.params;
+            const matterId = req.params.matterId || req.query.matterId || req.body.matterId;
+            const { eventId } = req.params;
+            if (!matterId) {
+                return res.status(400).json({ success: false, message: 'matterId is required' });
+            }
             const event = await matterEventService.getEvent(lawyerId, matterId, eventId);
             res.status(200).json({ success: true, data: event });
         }
@@ -41,7 +51,11 @@ class MatterEventController {
     async updateEvent(req, res, next) {
         try {
             const lawyerId = req.lawyer.id;
-            const { matterId, eventId } = req.params;
+            const matterId = req.params.matterId || req.body.matterId || req.query.matterId;
+            const { eventId } = req.params;
+            if (!matterId) {
+                return res.status(400).json({ success: false, message: 'matterId is required' });
+            }
             const event = await matterEventService.updateEvent(lawyerId, matterId, eventId, req.body);
             res.status(200).json({ success: true, data: event });
         }
@@ -52,7 +66,11 @@ class MatterEventController {
     async completeEvent(req, res, next) {
         try {
             const lawyerId = req.lawyer.id;
-            const { matterId, eventId } = req.params;
+            const matterId = req.params.matterId || req.body.matterId || req.query.matterId;
+            const { eventId } = req.params;
+            if (!matterId) {
+                return res.status(400).json({ success: false, message: 'matterId is required' });
+            }
             const result = await matterEventService.completeEvent(lawyerId, matterId, eventId);
             res.status(200).json({ success: true, data: result });
         }
@@ -63,7 +81,11 @@ class MatterEventController {
     async deleteEvent(req, res, next) {
         try {
             const lawyerId = req.lawyer.id;
-            const { matterId, eventId } = req.params;
+            const matterId = req.params.matterId || req.body.matterId || req.query.matterId;
+            const { eventId } = req.params;
+            if (!matterId) {
+                return res.status(400).json({ success: false, message: 'matterId is required' });
+            }
             const result = await matterEventService.deleteEvent(lawyerId, matterId, eventId);
             res.status(200).json({ success: true, data: result });
         }
@@ -75,8 +97,9 @@ class MatterEventController {
         try {
             const lawyerId = req.lawyer.id;
             const { daysAhead } = req.query;
-            const deadlines = await matterEventService.getUpcomingDeadlines(lawyerId, daysAhead ? parseInt(daysAhead) : 30);
-            res.status(200).json({ success: true, data: deadlines });
+            const parsedDays = daysAhead ? parseInt(daysAhead, 10) : undefined;
+            const events = await matterEventService.getUpcomingDeadlines(lawyerId, parsedDays);
+            res.status(200).json({ success: true, data: events });
         }
         catch (error) {
             next(error);

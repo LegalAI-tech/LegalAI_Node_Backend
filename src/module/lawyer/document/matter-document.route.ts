@@ -24,7 +24,7 @@ const upload = multer({
   },
 });
 
-router.post('/', upload.array('file'), matterDocumentController.uploadDocument as RequestHandler);
+router.post('/', upload.single('file'), matterDocumentController.uploadDocument as RequestHandler);
 router.get('/', matterDocumentController.listDocuments as RequestHandler);
 router.delete('/:docId', matterDocumentController.deleteDocument as RequestHandler);
 

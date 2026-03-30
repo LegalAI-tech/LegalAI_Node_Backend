@@ -149,13 +149,35 @@ class LawyerChatService {
         let currentMemoryVersion;
         let memoryInjected = false;
         if (conversation.matterId) {
-            const memory = await prisma.workspaceMemory.findUnique({
-                where: { matterId: conversation.matterId },
+            const matter = await prisma.matter.findUnique({
+                where: { id: conversation.matterId },
+                include: { memory: true }
             });
-            if (memory) {
-                workspaceMemoryPayload = workspaceMemoryService.buildPayload(memory);
-                currentMemoryVersion = memory.aiSummaryVersion;
+            if (matter) {
+                if (matter.memory) {
+                    workspaceMemoryPayload = workspaceMemoryService.buildPayload(matter.memory);
+                    currentMemoryVersion = matter.memory.aiSummaryVersion ?? undefined;
+                }
+                else {
+                    workspaceMemoryPayload = {
+                        partySummary: null, factChronology: null, legalIssues: null, documentIndex: null, keyDates: null, lawyerNotes: null, aiSummary: null, estimatedTokens: 0
+                    };
+                }
                 memoryInjected = true;
+                if (!workspaceMemoryPayload.partySummary) {
+                    let partiesStr = '';
+                    try {
+                        const parties = matter.parties;
+                        if (Array.isArray(parties)) {
+                            partiesStr = parties.map(p => `${p.role}: ${p.name}`).join(', ');
+                        }
+                    }
+                    catch (e) { }
+                    workspaceMemoryPayload.partySummary = `Case Title: ${matter.title}. Parties: ${partiesStr || 'Not explicitly listed yet.'}`;
+                }
+                if (!workspaceMemoryPayload.legalIssues && matter.practiceArea) {
+                    workspaceMemoryPayload.legalIssues = `Practice Area: ${matter.practiceArea}. ${matter.notes ? `Notes: ${matter.notes}` : ''}`;
+                }
             }
         }
         const recentMessages = await prisma.lawyerMessage.findMany({
