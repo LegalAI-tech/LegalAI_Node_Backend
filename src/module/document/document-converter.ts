@@ -3,6 +3,40 @@ import chromium from '@sparticuz/chromium';
 import HTMLtoDOCX from 'html-to-docx';
 import type HtmlToDocx from 'html-to-docx';
 import { marked } from 'marked';
+import fs from 'fs';
+
+function getLocalBrowserPath(): string | null {
+  if (process.platform === 'win32') {
+    const paths = [
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    ];
+    for (const p of paths) {
+      if (fs.existsSync(p)) return p;
+    }
+  } else if (process.platform === 'darwin') {
+    const paths = [
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+    ];
+    for (const p of paths) {
+      if (fs.existsSync(p)) return p;
+    }
+  } else if (process.platform === 'linux') {
+    const paths = [
+      '/usr/bin/google-chrome',
+      '/usr/bin/microsoft-edge',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium'
+    ];
+    for (const p of paths) {
+      if (fs.existsSync(p)) return p;
+    }
+  }
+  return null;
+}
 
 export type ConvertFormat = 'pdf' | 'docx' | 'txt';
 
@@ -174,10 +208,12 @@ ${bodyHtml}
 
 
 async function convertToPdf(htmlContent: string): Promise<Buffer> {
-  const executablePath = await chromium.executablePath();
+  const localPath = getLocalBrowserPath();
+  const executablePath = localPath || await chromium.executablePath();
+  const args = localPath ? ['--no-sandbox', '--disable-setuid-sandbox'] : chromium.args;
 
   const browser = await puppeteer.launch({
-    args: chromium.args,
+    args,
     executablePath,
     headless: true,
     defaultViewport: { width: 1280, height: 900 },
