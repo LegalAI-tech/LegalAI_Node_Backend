@@ -4,20 +4,24 @@ import documentConverter, { type ConvertFormat } from './document-converter.js';
 import { AppError } from '../../middleware/error.middleware.js';
 
 class DocumentService {
+  private ensureJ2Extension(templateName: string): string {
+    return templateName.endsWith('.j2') ? templateName : `${templateName}.j2`;
+  }
+
   async listTemplates() {
     return pythonBackend.listTemplates();
   }
 
   async getTemplateSchema(templateName: string) {
-    return pythonBackend.getTemplateSchema(templateName);
+    return pythonBackend.getTemplateSchema(this.ensureJ2Extension(templateName));
   }
 
   async getTemplateInfo(templateName: string) {
-    return pythonBackend.getTemplateInfo(templateName);
+    return pythonBackend.getTemplateInfo(this.ensureJ2Extension(templateName));
   }
 
   async getTemplateCriticalFields(templateName: string) {
-    return pythonBackend.getTemplateCriticalFields(templateName);
+    return pythonBackend.getTemplateCriticalFields(this.ensureJ2Extension(templateName));
   }
 
   async generateDocument(

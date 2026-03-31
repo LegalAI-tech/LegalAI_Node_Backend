@@ -88,7 +88,7 @@ export const authenticate = async (
   const decoded = verifyJwt(token, res);
   if (!decoded) return;
 
-  if (decoded.userType !== 'CITIZEN') {
+  if (decoded.userType !== 'CITIZEN' && decoded.userType !== 'USER') {
     res.status(403).json({ success: false, message: 'This route is for citizen accounts only.', code: 'WRONG_USER_TYPE' });
     return;
   }
@@ -293,7 +293,7 @@ export const authenticateUniversal = async (
   if (!decoded) return;
 
   try {
-    if (decoded.userType === 'CITIZEN') {
+    if (decoded.userType === 'CITIZEN' || decoded.userType === 'USER') {
       const user = await prisma.user.findUnique({
         where: { id: decoded.sub },
         select: { id: true, email: true, name: true, avatar: true, provider: true },
