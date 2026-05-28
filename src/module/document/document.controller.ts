@@ -45,9 +45,10 @@ class DocumentController {
   async generateDocument(req: AuthRequest, res: Response, next: NextFunction) {
     try {
       const userId = req.user!.id;
+      const userProvider = req.user!.provider;
       const { template_name, data, format } = req.body;
 
-      const result = await documentService.generateDocument(userId, template_name, data, format);
+      const result = await documentService.generateDocument(userId, template_name, data, format, userProvider);
 
       const safeTitle = result.document.title.replace(/[^a-z0-9_\-. ]/gi, '_');
       res.setHeader('Content-Type', result.mimeType);

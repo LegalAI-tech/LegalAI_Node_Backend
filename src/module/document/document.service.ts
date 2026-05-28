@@ -28,7 +28,8 @@ class DocumentService {
     userId: string,
     templateName: string,
     data: Record<string, any>,
-    format: ConvertFormat = 'pdf'
+    format: ConvertFormat = 'pdf',
+    provider?: string
   ) {
     const result = await pythonBackend.generateDocument(templateName, data);
 
@@ -50,30 +51,43 @@ class DocumentService {
 
     const fileDataBase64 = buffer.toString('base64');
 
-    const document = await prisma.document.create({
-      data: {
+    let document;
+
+    if (provider === 'lawyer' || provider === 'firm') {
+      document = {
+        id: `gen-${Date.now()}`,
         userId,
         title,
         content: result.document_content || '',
         format,
         fileUrl: `data:${mimeType};base64,${fileDataBase64}`,
-        prompt: JSON.stringify(data),
-        generatedBy: 'legal-ai-python-backend',
-        metadata: {
-          template_name: templateName,
-          mime_type: mimeType,
-          file_extension: extension,
-          status: result.status,
-          completion_percentage: result.completion_percentage,
-          total_fields: result.total_fields,
-          fields_provided: result.fields_provided,
-          missing_fields: result.missing_fields ?? [],
-          critical_fields_missing: result.critical_fields_missing ?? [],
-          ai_generated_fields: result.ai_generated_fields ?? [],
-          warning: result.warning ?? null,
+      };
+    } else {
+      document = await prisma.document.create({
+        data: {
+          userId,
+          title,
+          content: result.document_content || '',
+          format,
+          fileUrl: `data:${mimeType};base64,${fileDataBase64}`,
+          prompt: JSON.stringify(data),
+          generatedBy: 'legal-ai-python-backend',
+          metadata: {
+            template_name: templateName,
+            mime_type: mimeType,
+            file_extension: extension,
+            status: result.status,
+            completion_percentage: result.completion_percentage,
+            total_fields: result.total_fields,
+            fields_provided: result.fields_provided,
+            missing_fields: result.missing_fields ?? [],
+            critical_fields_missing: result.critical_fields_missing ?? [],
+            ai_generated_fields: result.ai_generated_fields ?? [],
+            warning: result.warning ?? null,
+          },
         },
-      },
-    });
+      });
+    }
 
     return {
       document,
