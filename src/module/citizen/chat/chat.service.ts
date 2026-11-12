@@ -1,5 +1,6 @@
 import prisma from '../../../config/database.js';
-import pythonBackendService from '../../../services/python-backend.service.js';
+import { Prisma } from '@prisma/client';
+import pythonBackendService, { pythonCaller } from '../../../services/python-backend.service.js';
 import cacheService from '../../../services/cache.service.js';
 import { AppError } from '../../../middleware/error.middleware.js';
 import crypto from 'crypto';
@@ -9,28 +10,21 @@ import {
   ChatResponse
 } from '../../../types/python-backend.types.js';
 
+// Union type representing all possible response shapes from the Python AI backend
 type AIResponse = AgentChatResponse | UploadAndChatResponse | ChatResponse;
 
-function isUploadAndChatResponse(response: AIResponse): response is UploadAndChatResponse {
-  return 'document_id' in response && 'response' in response;
-}
-
-function isAgentChatResponse(response: AIResponse): response is AgentChatResponse {
-  return 'session_id' in response && !('document_id' in response);
-}
-
+/**
+ * Extracts and normalizes the primary textual answer from any AI response format.
+ * Handles fallback steps, object payloads with sources, and string responses.
+ *
+ * @param response - The raw response payload from the Python AI backend.
+ * @returns The extracted answer string, with sources formatted in Markdown if present.
+ */
 function getResponseText(response: AIResponse): string {
   try {
-    let mainResponse: any = '';
+    let mainResponse: any = (response as any)?.response || '';
 
-    if (isUploadAndChatResponse(response)) {
-      mainResponse = response.response || '';
-    } else if (isAgentChatResponse(response)) {
-      mainResponse = response.response || '';
-    } else {
-      mainResponse = response.response || '';
-    }
-
+    // Fallback: If primary response is empty, check intermediate execution steps
     if (!mainResponse || (typeof mainResponse === 'string' && mainResponse.trim() === '')) {
       const metadata = getMetadata(response);
       if (metadata.intermediate_steps && Array.isArray(metadata.intermediate_steps)) {
@@ -44,6 +38,7 @@ function getResponseText(response: AIResponse): string {
     if (typeof mainResponse === 'string') {
       return mainResponse;
     } else if (typeof mainResponse === 'object' && mainResponse !== null) {
+      // Structure containing an answer and source citations
       if (mainResponse.answer) {
         let content = mainResponse.answer;
         if (mainResponse.sources) {
@@ -65,22 +60,33 @@ function getResponseText(response: AIResponse): string {
   }
 }
 
+/**
+ * Extracts the active session ID from an AI response if available.
+ *
+ * @param response - The AI response payload.
+ * @returns The session ID string, or undefined.
+ */
 function getSessionId(response: AIResponse): string | undefined {
-  if (isUploadAndChatResponse(response)) {
-    return response.session_id;
-  } else if (isAgentChatResponse(response)) {
-    return response.session_id;
-  }
-  return undefined;
+  return 'session_id' in response ? response.session_id : undefined;
 }
 
+/**
+ * Extracts the document ID from an AI response if available.
+ *
+ * @param response - The AI response payload.
+ * @returns The document ID string, or undefined.
+ */
 function getDocumentId(response: AIResponse): string | undefined {
-  if (isUploadAndChatResponse(response)) {
-    return response.document_id || undefined;
-  }
-  return undefined;
+  return 'document_id' in response ? (response.document_id || undefined) : undefined;
 }
 
+/**
+ * Formats a simplified metadata object tailored for the client UI,
+ * including participating agent names and document references.
+ *
+ * @param response - The raw AI response.
+ * @returns A sanitized metadata dictionary for client consumption.
+ */
 function getSimplifiedMetadata(response: AIResponse): Record<string, any> {
   const baseMetadata: Record<string, any> = {
     agents_used: [],
@@ -89,54 +95,89 @@ function getSimplifiedMetadata(response: AIResponse): Record<string, any> {
   const fullMetadata = getMetadata(response);
   const executionTrace = fullMetadata.execution_trace || [];
 
-  const agentsWithDetails = executionTrace.map((step: any) => {
-    const agentInfo: any = {
+  if (executionTrace.length > 0) {
+    baseMetadata.agents_used = executionTrace.map((step: any) => ({
       agent: step.agent || 'unknown',
-    };
-    return agentInfo;
-  });
-
-  if (agentsWithDetails.length > 0) {
-    baseMetadata.agents_used = agentsWithDetails;
+    }));
   } else {
-    let simpleAgents: string[] = [];
-    if (isUploadAndChatResponse(response)) {
-      simpleAgents = response.agents_used || [];
-    } else if (isAgentChatResponse(response)) {
-      simpleAgents = response.agents_used || [];
-    }
+    const simpleAgents: string[] = ('agents_used' in response && response.agents_used) || [];
     baseMetadata.agents_used = simpleAgents.map((agent: string) => ({ agent }));
   }
 
-  if (isUploadAndChatResponse(response)) {
-    baseMetadata.document_id = response.document_id;
+  const docId = getDocumentId(response);
+  if (docId) {
+    baseMetadata.document_id = docId;
   }
 
   return baseMetadata;
 }
 
+/**
+ * Extracts full technical metadata from the AI response,
+ * including execution traces, agent outputs, language info, and storage URLs.
+ *
+ * @param response - The AI response payload.
+ * @returns A dictionary of technical metadata.
+ */
 function getMetadata(response: AIResponse): Record<string, any> {
-  if (isUploadAndChatResponse(response)) {
-    return {
-      agents_used: response.agents_used,
-      execution_trace: response.execution_trace,
-      agent_outputs: response.agent_outputs,
-      language_info: response.language_info,
-      storage_url: response.storage_url,
+  if ('agents_used' in response || 'execution_trace' in response) {
+    const resp = response as any;
+    const metadata: Record<string, any> = {
+      agents_used: resp.agents_used,
+      execution_trace: resp.execution_trace,
+      agent_outputs: resp.agent_outputs,
+      language_info: resp.language_info,
     };
-  } else if (isAgentChatResponse(response)) {
-    return {
-      agents_used: response.agents_used,
-      execution_trace: response.execution_trace,
-      agent_outputs: response.agent_outputs,
-      language_info: response.language_info,
-    };
+    if (resp.storage_url) {
+      metadata.storage_url = resp.storage_url;
+    }
+    return metadata;
   }
   return {};
 }
 
 class ChatService {
-  async createConversation (
+  /**
+   * Helper to find a conversation verifying user ownership, throwing a 404 AppError if not found.
+   * Supports type-safe Prisma query options (select/include).
+   *
+   * @param userId - The ID of the authenticated user.
+   * @param conversationId - The ID of the conversation to look up.
+   * @param options - Additional Prisma findFirst options (select, include).
+   * @returns The resolved conversation record.
+   */
+  private async findUserConversation<T extends Prisma.ConversationFindFirstArgs = Prisma.ConversationFindFirstArgs>(
+    userId: string,
+    conversationId: string,
+    options?: Prisma.SelectSubset<T, Prisma.ConversationFindFirstArgs>
+  ): Promise<Prisma.ConversationGetPayload<T>> {
+    const conversation = await prisma.conversation.findFirst({
+      ...(options as any),
+      // Last, so options can never replace the ownership filter
+      where: { id: conversationId, userId },
+    });
+
+    if (!conversation) {
+      throw new AppError('Conversation not found', 404);
+    }
+
+    return conversation as unknown as Prisma.ConversationGetPayload<T>;
+  }
+
+  /**
+   * Creates a new conversation record in the database.
+   * Supports optimistic UI creation when the client provides an ID upfront.
+   *
+   * @param userId - The ID of the owner user.
+   * @param title - The conversation title.
+   * @param mode - The chat mode: 'NORMAL' (standard QA) or 'AGENTIC' (multi-agent legal analysis).
+   * @param documentId - Optional ID of an attached document.
+   * @param documentName - Optional name of the attached document.
+   * @param sessionId - Optional agent session ID.
+   * @param clientProvidedId - Optional pre-generated ID from the frontend.
+   * @returns The created conversation database record.
+   */
+  async createConversation(
     userId: string,
     title: string,
     mode: 'NORMAL' | 'AGENTIC',
@@ -152,13 +193,8 @@ class ChatService {
       documentId: documentId || null,
       documentName: documentName || null,
       sessionId: sessionId || null,
+      id: clientProvidedId || crypto.randomUUID(),
     };
-
-    if (clientProvidedId) {
-      conversationData.id = clientProvidedId;
-    } else {
-      conversationData.id = crypto.randomUUID();
-    }
 
     const conversation = await prisma.conversation.create({
       data: conversationData,
@@ -167,6 +203,23 @@ class ChatService {
     return conversation;
   }
 
+  /**
+   * Sends a message within a conversation and orchestrates the AI response lifecycle:
+   * 1. Verifies conversation ownership and loads past messages/context.
+   * 2. Dispatches to the Python backend based on mode and attachments.
+   * 3. Synchronizes session and document IDs for agentic workflows.
+   * 4. Persists USER and ASSISTANT messages to the database.
+   * 5. Updates rolling conversation summary, timestamps, and invalidates user cache.
+   *
+   * @param userId - ID of the user sending the message.
+   * @param conversationId - ID of the active conversation.
+   * @param message - Text content of the user message.
+   * @param mode - 'NORMAL' (standard RAG QA) or 'AGENTIC' (multi-agent research).
+   * @param file - Optional uploaded file attachment (buffer and fileName).
+   * @param inputLanguage - Optional source language code.
+   * @param outputLanguage - Optional desired response language code.
+   * @returns The newly created assistant message and updated conversation state.
+   */
   async sendMessage(
     userId: string,
     conversationId: string,
@@ -176,8 +229,8 @@ class ChatService {
     inputLanguage?: string,
     outputLanguage?: string
   ) {
-    const conversation = await prisma.conversation.findFirst({
-      where: { id: conversationId, userId },
+    // 1. Fetch conversation and recent message context
+    const conversation = await this.findUserConversation(userId, conversationId, {
       select: {
         id: true,
         userId: true,
@@ -191,55 +244,15 @@ class ChatService {
       },
     });
 
-    if (!conversation) {
-      throw new AppError('Conversation not found', 404);
-    }
-
-    if (!file) {
-      const cachedResponse = await cacheService.getAIResponse(message, mode);
-      if (cachedResponse) {
-        const userMessage = await prisma.message.create({
-          data: {
-            id: crypto.randomUUID(),
-            conversationId,
-            role: 'USER',
-            content: message,
-          },
-        });
-
-        const assistantMessage = await prisma.message.create({
-          data: {
-            id: crypto.randomUUID(),
-            conversationId,
-            role: 'ASSISTANT',
-            content: getResponseText(cachedResponse),
-            metadata: {
-              cached: true,
-              ...getSimplifiedMetadata(cachedResponse)
-            },
-          },
-        });
-
-        await prisma.conversation.update({
-          where: { id: conversationId },
-          data: { lastMessageAt: new Date() },
-        });
-
-        return {
-          message: assistantMessage,
-          conversation: {
-            id: conversationId,
-            sessionId: getSessionId(cachedResponse),
-            documentId: getDocumentId(cachedResponse)
-          }
-        };
-      }
-    }
-
+    // AI responses are deliberately not cached: an answer depends on this
+    // conversation's history, summary and documents, so the same text from
+    // another user (or a later turn) must never reuse it.
     let aiResponse: AIResponse;
 
+    // 2. Dispatch to Python AI service
     if (file && mode === 'AGENTIC') {
       aiResponse = await pythonBackendService.agentUploadAndChat(
+        pythonCaller.citizen(userId),
         file.buffer,
         file.fileName,
         message,
@@ -248,17 +261,40 @@ class ChatService {
         outputLanguage,
         conversation.summary || null
       );
+    } else if (mode === 'AGENTIC') {
+      aiResponse = await pythonBackendService.agentChat(
+        pythonCaller.citizen(userId),
+        message,
+        conversation.sessionId || undefined,
+        conversation.documentId || undefined,
+        conversation.summary || null
+      );
+    } else {
+      const historyItems = conversation.messages
+        .filter((msg: any) => msg.role !== 'SYSTEM')
+        .map((msg: any) => ({
+          role: msg.role.toLowerCase() === 'user' ? 'user' : 'assistant',
+          content: msg.content || ' ',
+        }));
 
+      aiResponse = await pythonBackendService.chat(message, historyItems, conversation.summary || undefined, {
+        input_language: inputLanguage,
+        output_language: outputLanguage,
+      });
+    }
+
+    // 3. Synchronize agentic session and document details
+    if (mode === 'AGENTIC') {
       const updateData: { documentId?: string; documentName?: string; sessionId?: string } = {};
 
       const docId = getDocumentId(aiResponse);
-      if (docId) {
+      if (docId && docId !== conversation.documentId) {
         updateData.documentId = docId;
-        updateData.documentName = file.fileName;
+        if (file) updateData.documentName = file.fileName;
       }
 
       const newSessionId = getSessionId(aiResponse);
-      if (newSessionId) {
+      if (newSessionId && newSessionId !== conversation.sessionId) {
         updateData.sessionId = newSessionId;
       }
 
@@ -268,57 +304,10 @@ class ChatService {
           data: updateData,
         });
       }
-
-    } else if (conversation.documentId && mode === 'AGENTIC') {
-        const sessionId = conversation.sessionId;
-        aiResponse = await pythonBackendService.agentChat(
-          message,
-          sessionId || undefined,
-          conversation.documentId,
-          conversation.summary || null
-        );
-
-        const newSessionId = getSessionId(aiResponse);
-        if (newSessionId && newSessionId !== sessionId) {
-          await prisma.conversation.update({
-            where: { id: conversationId },
-            data: { sessionId: newSessionId },
-          });
-        }
-    } else if (mode === 'AGENTIC') {
-        const sessionId = conversation.sessionId;
-        aiResponse = await pythonBackendService.agentChat(
-          message,
-          sessionId || undefined,
-          undefined,
-          conversation.summary || null
-        );
-
-      const newSessionId = getSessionId(aiResponse);
-      if (newSessionId && newSessionId !== sessionId) {
-        await prisma.conversation.update({
-          where: { id: conversationId },
-          data: { sessionId: newSessionId },
-        });
-      }
-    } else {
-      const historyItems = conversation.messages
-        .filter(msg => msg.role !== 'SYSTEM')
-        .map(msg => ({
-          role: msg.role.toLowerCase() === 'user' ? 'user' : 'assistant', 
-          content: msg.content || " "
-        }));
-      aiResponse = await pythonBackendService.chat(message, historyItems, conversation.summary || undefined, {
-        input_language: inputLanguage,
-        output_language: outputLanguage
-      });
     }
 
-    if (!file) {
-      await cacheService.cacheAIResponse(message, mode, aiResponse);
-    }
-
-    const userMessage = await prisma.message.create({
+    // 4. Save user message to database
+    await prisma.message.create({
       data: {
         id: crypto.randomUUID(),
         conversationId,
@@ -328,6 +317,7 @@ class ChatService {
       },
     });
 
+    // 5. Save assistant message to database
     const responseText = getResponseText(aiResponse);
     const messageContent = responseText || 'AI response received but content could not be extracted.';
 
@@ -344,22 +334,20 @@ class ChatService {
       },
     });
 
+    // 6. Update rolling summary (if updated by AI) and last message timestamp
+    const convUpdateData: Record<string, any> = { lastMessageAt: new Date() };
     const updatedSummary = (aiResponse as any).updated_summary;
     if (updatedSummary && typeof updatedSummary === 'string') {
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: {
-          summary: updatedSummary,
-          summaryUpdatedAt: new Date()
-        }
-      });
+      convUpdateData.summary = updatedSummary;
+      convUpdateData.summaryUpdatedAt = new Date();
     }
 
     await prisma.conversation.update({
       where: { id: conversationId },
-      data: { lastMessageAt: new Date() },
+      data: convUpdateData,
     });
 
+    // 7. Invalidate user conversation cache
     await cacheService.clearUserCache(userId);
 
     return {
@@ -367,11 +355,18 @@ class ChatService {
       conversation: {
         id: conversationId,
         sessionId: getSessionId(aiResponse),
-        documentId: getDocumentId(aiResponse)
-      }
+        documentId: getDocumentId(aiResponse),
+      },
     };
   }
 
+  /**
+   * Retrieves all conversations for a user, sorted by last message time descending.
+   * Utilizes cache with a 30-minute TTL to reduce database load.
+   *
+   * @param userId - The ID of the authenticated user.
+   * @returns Array of conversations including their most recent message preview.
+   */
   async getConversations(userId: string) {
     const cached = await cacheService.getUserData(`conversations:${userId}`);
     if (cached) return cached;
@@ -392,37 +387,32 @@ class ChatService {
     return conversations;
   }
 
+  /**
+   * Fetches the complete message history for a conversation in chronological order.
+   *
+   * @param userId - ID of the authenticated user.
+   * @param conversationId - ID of the conversation.
+   * @returns Conversation record including its full list of messages.
+   */
   async getConversationMessages(userId: string, conversationId: string) {
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        userId,
-      },
+    return this.findUserConversation(userId, conversationId, {
       include: {
         messages: {
           orderBy: { createdAt: 'asc' },
         },
       },
     });
-
-    if (!conversation) {
-      throw new AppError('Conversation not found', 404);
-    }
-
-    return conversation;
   }
 
+  /**
+   * Deletes a single conversation and its associated messages.
+   * Clears the user's cached conversation list.
+   *
+   * @param userId - ID of the authenticated user.
+   * @param conversationId - ID of the conversation to delete.
+   */
   async deleteConversation(userId: string, conversationId: string) {
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        userId,
-      },
-    });
-
-    if (!conversation) {
-      throw new AppError('Conversation not found', 404);
-    }
+    await this.findUserConversation(userId, conversationId);
 
     await prisma.conversation.delete({
       where: { id: conversationId },
@@ -431,6 +421,12 @@ class ChatService {
     await cacheService.clearUserCache(userId);
   }
 
+  /**
+   * Deletes all conversations belonging to a user and clears their cache.
+   *
+   * @param userId - ID of the authenticated user.
+   * @returns Object containing the count of deleted conversations.
+   */
   async deleteAllConversations(userId: string) {
     const result = await prisma.conversation.deleteMany({
       where: {
@@ -444,12 +440,16 @@ class ChatService {
     };
   }
 
+  /**
+   * Retrieves high-level conversation metadata (title, mode, document, session)
+   * without loading message content.
+   *
+   * @param userId - ID of the authenticated user.
+   * @param conversationId - ID of the conversation.
+   * @returns The conversation metadata record.
+   */
   async getConversationInfo(userId: string, conversationId: string) {
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        userId,
-      },
+    return this.findUserConversation(userId, conversationId, {
       select: {
         id: true,
         title: true,
@@ -460,25 +460,21 @@ class ChatService {
         createdAt: true,
       },
     });
-
-    if (!conversation) {
-      throw new AppError('Conversation not found', 404);
-    }
-
-    return conversation;
   }
 
+  /**
+   * Toggles public sharing for a conversation.
+   * When enabled, generates a unique hashed URL token and marks the conversation as shared.
+   * When disabled, revokes existing share tokens.
+   *
+   * @param userId - ID of the authenticated user.
+   * @param conversationId - ID of the conversation to share or unshare.
+   * @param share - True to enable sharing, false to disable.
+   * @param req - Express request object to construct the absolute public share URL.
+   * @returns Object containing the public link or a confirmation message.
+   */
   async shareConversation(userId: string, conversationId: string, share: boolean, req: any) {
-    const conversation = await prisma.conversation.findFirst({
-      where: {
-        id: conversationId,
-        userId,
-      },
-    });
-
-    if (!conversation) {
-      throw new AppError('Conversation not found', 404);
-    }
+    await this.findUserConversation(userId, conversationId);
 
     if (share) {
       let existingLink = await prisma.sharedLink.findFirst({
@@ -530,7 +526,14 @@ class ChatService {
     }
   }
 
-
+  /**
+   * Publicly fetches a shared conversation by its unique hashed link.
+   * Validates link existence, user share settings, conversation share status,
+   * expiration dates, and view limits before atomically incrementing view count.
+   *
+   * @param shareLink - The hashed share token from the URL.
+   * @returns Sanitized public conversation transcript and share stats.
+   */
   async getSharedConversation(shareLink: string) {
     const linkDoc = await prisma.sharedLink.findUnique({
       where: { hashedLink: shareLink },

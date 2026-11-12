@@ -29,7 +29,12 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction) 
 
       res.header(
         'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+        'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Request-Id'
+      );
+      // Without this the browser hides these response headers from frontend code
+      res.header(
+        'Access-Control-Expose-Headers',
+        'X-Request-Id, Content-Disposition, X-Document-Id, X-Generation-Status, X-Completion-Percentage, X-Generation-Warning'
       );
     }
   }

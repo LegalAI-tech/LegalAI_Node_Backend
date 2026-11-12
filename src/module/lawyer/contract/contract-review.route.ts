@@ -3,6 +3,7 @@ import type { RequestHandler } from 'express';
 import multer from 'multer';
 import contractReviewController from './contract-review.controller.js';
 import { authenticateLawyer } from '../../../middleware/auth.middleware.js';
+import { keepRequestContext } from '../../../middleware/request-id.middleware.js';
 
 const router = Router();
 
@@ -24,6 +25,6 @@ const upload = multer({
   },
 });
 
-router.post('/review', upload.single('file'), contractReviewController.review as RequestHandler);
+router.post('/review', keepRequestContext(upload.single('file')), contractReviewController.review as RequestHandler);
 
 export default router;

@@ -52,48 +52,6 @@ class CacheService {
     }
   }
 
-  async cacheAIResponse(query: string, mode: string, response: any, ttl = 7200) {
-    try {
-      const hash = this.generateHash({ query, mode });
-      const serialized = JSON.stringify(response);
-      await redis.setex(`ai:${hash}`, ttl, serialized);
-    } catch (error) {
-      console.error('Error caching AI response:', error);
-    }
-  }
-
-  async getAIResponse(query: string, mode: string) {
-    try {
-      const hash = this.generateHash({ query, mode });
-      const cached = await redis.get(`ai:${hash}`);
-
-      if (!cached) {
-        return null;
-      }
-
-      if (typeof cached === 'string') {
-        if (cached === '[object Object]' || cached.startsWith('[object')) {
-          console.warn('Invalid cached data detected, clearing cache');
-          await redis.del(`ai:${hash}`);
-          return null;
-        }
-
-        try {
-          return JSON.parse(cached);
-        } catch (parseError) {
-          console.error('Error parsing cached AI response:', parseError);
-          await redis.del(`ai:${hash}`);
-          return null;
-        }
-      }
-
-      return cached;
-    } catch (error) {
-      console.error('Error retrieving AI response from cache:', error);
-      return null;
-    }
-  }
-
   async cacheTranslation(text: string, sourceLang: string, targetLang: string, translation: string, ttl = 86400) {
     try {
       const hash = this.generateHash({ text, sourceLang, targetLang });

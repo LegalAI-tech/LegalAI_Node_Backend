@@ -3,6 +3,7 @@ import type { RequestHandler } from 'express';
 import multer from 'multer';
 import matterDocumentController from './matter-document.controller.js';
 import { authenticateLawyer } from '../../../middleware/auth.middleware.js';
+import { keepRequestContext } from '../../../middleware/request-id.middleware.js';
 
 const router = Router({ mergeParams: true });
 
@@ -24,7 +25,7 @@ const upload = multer({
   },
 });
 
-router.post('/', upload.single('file'), matterDocumentController.uploadDocument as RequestHandler);
+router.post('/', keepRequestContext(upload.single('file')), matterDocumentController.uploadDocument as RequestHandler);
 router.get('/', matterDocumentController.listDocuments as RequestHandler);
 router.delete('/:docId', matterDocumentController.deleteDocument as RequestHandler);
 

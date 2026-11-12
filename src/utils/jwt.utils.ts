@@ -46,6 +46,32 @@ const JWT_REFRESH_SECRET = () => {
   return process.env.JWT_REFRESH_SECRET;
 };
 
+const PYTHON_BACKEND_SECRETKEY = () => {
+  if (!process.env.PYTHON_BACKEND_SECRETKEY) throw new Error('PYTHON_BACKEND_SECRETKEY not set');
+  return process.env.PYTHON_BACKEND_SECRETKEY;
+};
+
+// Optional identity the Python service can use to scope a request.
+export interface PythonServiceClaims {
+  role?: UserType;
+  tenant?: string;
+  matter?: string;
+}
+
+/**
+ * Short-lived token proving a request to the Python AI backend comes from this server.
+ * Issuer and audience must match utils/auth.py in the Python backend.
+ */
+export function generatePythonServiceToken(claims: PythonServiceClaims = {}): string {
+  return jwt.sign(claims, PYTHON_BACKEND_SECRETKEY(), {
+    algorithm: 'HS256',
+    subject: 'node-backend',
+    issuer: 'legalai-node',
+    audience: 'legalai-python',
+    expiresIn: '5m',
+  } as SignOptions);
+}
+
 
 export function generateCitizenTokens(citizenId: string) {
   const payload: CitizenJwtPayload = { sub: citizenId, userType: 'CITIZEN' };
