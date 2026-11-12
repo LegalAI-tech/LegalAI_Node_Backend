@@ -502,6 +502,14 @@ npm run dev
 
 ## 🧪 Testing
 
+```bash
+npm run typecheck   # tsc --noEmit
+npm test            # unit tests (node:test via tsx), no database or network needed
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs both, plus `npm run build`, on every push to `main` and every pull request.
+`src/services/python-backend.service.test.ts` pins the service-token format the Python backend checks (issuer, audience, tenant and matter claims); change it together with `utils/auth.py` there.
+
 Test basic REST functionality or check health status:
 
 ```bash
