@@ -1,3 +1,4 @@
+import type { WorkspaceMemory } from '@prisma/client';
 import prisma from '../../../config/database.js';
 import { AppError } from '../../../middleware/error.middleware.js';
 import { logger } from '../../../utils/logger.js';
@@ -83,6 +84,37 @@ export function mergeKeyDates(existing: unknown, incoming: KeyDate[]): KeyDate[]
 
   return added.length ? [...current, ...added] : null;
 }
+
+type MemoryFields = Pick<WorkspaceMemory, 'partySummary' | 'factChronology' | 'legalIssues' | 'keyDates' | 'aiSummary'>;
+
+/** The fields an AI update would change, or null when it changes nothing. */
+export function aiMemoryChanges(memory: MemoryFields, updates: AiWorkspaceUpdates) {
+  const changes: {
+    partySummary?: string | null;
+    factChronology?: string | null;
+    legalIssues?: string | null;
+    keyDates?: KeyDate[];
+    aiSummary?: string;
+  } = {};
+
+  const filled = {
+    partySummary: fillIfEmpty(memory.partySummary, updates.party_summary),
+    factChronology: fillIfEmpty(memory.factChronology, updates.fact_chronology),
+    legalIssues: fillIfEmpty(memory.legalIssues, updates.legal_issues),
+  };
+  for (const field of ['partySummary', 'factChronology', 'legalIssues'] as const) {
+    if (filled[field] !== memory[field]) changes[field] = filled[field];
+  }
+
+  const keyDates = mergeKeyDates(memory.keyDates, normalizeKeyDates(updates.key_dates));
+  if (keyDates) changes.keyDates = keyDates;
+
+  const aiSummary = nonEmpty(updates.ai_summary);
+  if (aiSummary && aiSummary !== memory.aiSummary) changes.aiSummary = aiSummary;
+
+  return Object.keys(changes).length ? changes : null;
+}
+
 
 class WorkspaceMemoryService {
 
@@ -258,59 +290,47 @@ class WorkspaceMemoryService {
    * Apply the memory updates the AI extracted during a matter chat turn.
    * AI text only fills fields that are still empty, so it never overwrites
    * what a lawyer wrote. aiSummary is AI-owned and is replaced. New key dates
-   * are appended. Returns true when anything changed.
+   * are appended. The write only lands if the row is unchanged since it was
+   * read; otherwise the merge is redone against the newer row. Returns true
+   * when anything changed.
    */
   async applyAiUpdates(matterId: string, updates: AiWorkspaceUpdates): Promise<boolean> {
-    const memory = await prisma.workspaceMemory.upsert({
-      where: { matterId },
-      create: { matterId, estimatedTokens: 0 },
-      update: {},
-    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const memory = await prisma.workspaceMemory.upsert({
+        where: { matterId },
+        create: { matterId, estimatedTokens: 0 },
+        update: {},
+      });
 
-    const merged = {
-      partySummary: fillIfEmpty(memory.partySummary, updates.party_summary),
-      factChronology: fillIfEmpty(memory.factChronology, updates.fact_chronology),
-      legalIssues: fillIfEmpty(memory.legalIssues, updates.legal_issues),
-      keyDates: mergeKeyDates(memory.keyDates, normalizeKeyDates(updates.key_dates)),
-    };
+      const changes = aiMemoryChanges(memory, updates);
+      if (!changes) return false;
 
-    const aiSummary = nonEmpty(updates.ai_summary);
-    const summaryChanged = !!aiSummary && aiSummary !== memory.aiSummary;
+      const next = { ...memory, ...changes };
+      const { count } = await prisma.workspaceMemory.updateMany({
+        where: { matterId, updatedAt: memory.updatedAt },
+        data: {
+          ...changes,
+          ...(changes.aiSummary
+            ? { aiSummaryVersion: { increment: 1 }, lastAiUpdateAt: new Date() }
+            : {}),
+          estimatedTokens: this.estimateTokens({
+            partySummary: next.partySummary ?? undefined,
+            factChronology: next.factChronology ?? undefined,
+            legalIssues: next.legalIssues ?? undefined,
+            keyDates: (next.keyDates as KeyDate[] | null) ?? undefined,
+            lawyerNotes: next.lawyerNotes ?? undefined,
+          }),
+        },
+      });
 
-    const changed =
-      merged.partySummary !== memory.partySummary ||
-      merged.factChronology !== memory.factChronology ||
-      merged.legalIssues !== memory.legalIssues ||
-      merged.keyDates !== null ||
-      summaryChanged;
+      if (count === 1) {
+        logger.info('WorkspaceMemory updated from chat', { matterId, summaryChanged: !!changes.aiSummary });
+        return true;
+      }
+    }
 
-    if (!changed) return false;
-
-    const keyDates = merged.keyDates ?? (memory.keyDates as KeyDate[] | null) ?? undefined;
-
-    await prisma.workspaceMemory.update({
-      where: { matterId },
-      data: {
-        partySummary: merged.partySummary,
-        factChronology: merged.factChronology,
-        legalIssues: merged.legalIssues,
-        ...(merged.keyDates ? { keyDates: merged.keyDates } : {}),
-        ...(summaryChanged
-          ? { aiSummary, aiSummaryVersion: { increment: 1 }, lastAiUpdateAt: new Date() }
-          : {}),
-        estimatedTokens: this.estimateTokens({
-          partySummary: merged.partySummary ?? undefined,
-          factChronology: merged.factChronology ?? undefined,
-          legalIssues: merged.legalIssues ?? undefined,
-          keyDates,
-          lawyerNotes: memory.lawyerNotes ?? undefined,
-        }),
-      },
-    });
-
-    logger.info('WorkspaceMemory updated from chat', { matterId, summaryChanged });
-
-    return true;
+    logger.warn('WorkspaceMemory kept changing during AI update; skipped', { matterId });
+    return false;
   }
 
   private estimateTokens(input: UpdateMemoryInput): number {

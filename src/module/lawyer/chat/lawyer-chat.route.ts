@@ -7,10 +7,11 @@ import { keepRequestContext } from '../../../middleware/request-id.middleware.js
 
 const router = Router();
 
+// Matter attachments become matter documents, so this matches their 20MB limit
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024,
+    fileSize: 20 * 1024 * 1024,
   },
   fileFilter: (req, file, cb) => {
     const allowedTypes = ['application/pdf', 'application/msword',

@@ -197,8 +197,10 @@ class LawyerChatService {
     }
 
     let vectorDocId: string | undefined;
-    const activeDocId = selectedDocId || conversation.documentId;
     const standaloneAttachment = readStandaloneAttachment(conversation.metadata);
+    // A document picked for this message wins; otherwise a file attached in a
+    // standalone chat replaces the document the chat started with
+    const activeDocId = selectedDocId || (standaloneAttachment ? undefined : conversation.documentId);
 
     if (file && conversation.matterId) {
       // In a matter, an attachment becomes a matter document and the chat's active document
@@ -425,8 +427,12 @@ class LawyerChatService {
     const doc = await matterDocumentService.uploadDocument(lawyerId, matterId, file, {});
 
     if (!doc.vectorIndexed || !doc.vectorDocId) {
+      // Remove the unreadable copy so a retry does not leave duplicates in the matter
+      await matterDocumentService.deleteDocument(lawyerId, matterId, doc.id).catch((err) =>
+        logger.warn('Failed to remove unindexed attachment', { matterId, docId: doc.id, err })
+      );
       throw new AppError(
-        'The attachment was saved to the matter but could not be read. Please try again.',
+        'The attachment could not be read. Please try again.',
         502,
         'ATTACHMENT_NOT_INDEXED'
       );

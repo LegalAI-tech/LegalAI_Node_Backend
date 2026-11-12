@@ -14,22 +14,6 @@ import {
 type AIResponse = AgentChatResponse | UploadAndChatResponse | ChatResponse;
 
 /**
- * Type guard to check if an AI response is from an upload-and-chat session.
- * These responses contain both a `document_id` and a `response`.
- */
-function isUploadAndChatResponse(response: AIResponse): response is UploadAndChatResponse {
-  return 'document_id' in response && 'response' in response;
-}
-
-/**
- * Type guard to check if an AI response is from an agentic chat session.
- * These responses contain a `session_id` without an associated `document_id`.
- */
-function isAgentChatResponse(response: AIResponse): response is AgentChatResponse {
-  return 'session_id' in response && !('document_id' in response);
-}
-
-/**
  * Extracts and normalizes the primary textual answer from any AI response format.
  * Handles fallback steps, object payloads with sources, and string responses.
  *
@@ -168,8 +152,9 @@ class ChatService {
     options?: Prisma.SelectSubset<T, Prisma.ConversationFindFirstArgs>
   ): Promise<Prisma.ConversationGetPayload<T>> {
     const conversation = await prisma.conversation.findFirst({
-      where: { id: conversationId, userId },
       ...(options as any),
+      // Last, so options can never replace the ownership filter
+      where: { id: conversationId, userId },
     });
 
     if (!conversation) {

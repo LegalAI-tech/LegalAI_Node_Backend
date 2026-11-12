@@ -62,6 +62,11 @@ async function main() {
 
     const results = await pythonBackendService.assignDocumentOwners(assignments);
 
+    // Results come back one per document, in order; stop rather than write an ID to the wrong row
+    if (results.length !== batch.length || results.some((r, index) => r.storage_url !== batch[index]!.fileUrl)) {
+      throw new Error('Python returned results that do not line up with the documents sent; nothing in this batch was written.');
+    }
+
     for (const [index, result] of results.entries()) {
       const doc = batch[index]!;
       counts[result.status] = (counts[result.status] ?? 0) + 1;

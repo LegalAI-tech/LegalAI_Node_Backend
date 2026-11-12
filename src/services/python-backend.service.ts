@@ -82,10 +82,14 @@ class PythonBackendService {
           console.error('Python backend timeout. The space might be sleeping or overloaded.');
           error.message = 'The AI service is taking longer than expected. This might be because the service is waking up from sleep. Please try again in a moment.';
         }
-        if (error.response?.status === 401 || error.response?.status === 503) {
+        // 503 is also what a sleeping or starting Space returns, so only this detail means a missing secret
+        const detail = String(error.response?.data?.detail ?? '');
+        if (error.response?.status === 401) {
           console.error(
             'Python backend rejected the service token. Check that PYTHON_BACKEND_SECRETKEY is set to the same value on both services.'
           );
+        } else if (error.response?.status === 503 && detail.includes('authentication is not configured')) {
+          console.error('Python backend has no PYTHON_BACKEND_SECRETKEY set.');
         }
         throw error;
       }
