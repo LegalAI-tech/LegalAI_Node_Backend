@@ -23,6 +23,9 @@ services:
       - key: JWT_REFRESH_SECRET
         generateValue: true
         sync: false
+      # Must equal the Python backend's PYTHON_BACKEND_SECRETKEY, so it is set by hand
+      - key: PYTHON_BACKEND_SECRETKEY
+        sync: false
     # Health check
     healthCheckPath: /health
 

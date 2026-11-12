@@ -151,3 +151,19 @@ export interface TemplateCriticalFieldsResponse {
   count: number;
   note: string;
 }
+
+export interface DocumentOwnerAssignment {
+  storage_url: string;
+  tenant_id: string;
+  matter_id?: string | null;
+  legacy_document_id?: string | null;
+  file_name?: string | null;
+}
+
+export interface DocumentOwnerAssignmentResult {
+  storage_url: string;
+  status: 'assigned' | 'conflict' | 'invalid' | 'error';
+  document_id: string | null;
+  chunks_updated: number;
+  detail: string | null;
+}

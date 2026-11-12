@@ -1,7 +1,8 @@
 import prisma from '../../../config/database.js';
 import { AppError } from '../../../middleware/error.middleware.js';
 import { logger } from '../../../utils/logger.js';
-import pythonBackendService from '../../../services/python-backend.service.js';
+import pythonBackendService, { pythonCaller } from '../../../services/python-backend.service.js';
+import { buildMemoryRegenerationPrompt } from '../../../prompts/workspace-memory.prompt.js';
 
 
 export interface UpdateMemoryInput {
@@ -21,6 +22,66 @@ export interface WorkspaceMemoryPayload {
   lawyerNotes: string | null;
   aiSummary: string | null;
   estimatedTokens: number;
+}
+
+// Shape of `workspace_updates` returned by the Python agent for a matter chat turn
+export interface AiWorkspaceUpdates {
+  party_summary?: string | null;
+  fact_chronology?: string | null;
+  legal_issues?: string | null;
+  ai_summary?: string | null;
+  key_dates?: unknown;
+}
+
+type KeyDate = { label: string; date: string };
+
+const DEFAULT_KEY_DATE_LABEL = 'Mentioned in chat';
+
+function nonEmpty(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+/** Keeps what is already there; uses the AI's suggestion only for an empty field. */
+function fillIfEmpty(current: string | null, suggestion: unknown): string | null {
+  return current?.trim() ? current : nonEmpty(suggestion) ?? current;
+}
+
+function isCalendarDate(value: string): boolean {
+  // Round-trip rejects impossible dates such as 2026-02-30
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+    && !Number.isNaN(Date.parse(`${value}T00:00:00Z`))
+    && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+}
+
+/**
+ * Accepts the AI's key dates as "YYYY-MM-DD" strings or {label, date} objects
+ * and drops anything that is not a real calendar date.
+ */
+export function normalizeKeyDates(raw: unknown): KeyDate[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw.flatMap((item): KeyDate[] => {
+    const date = typeof item === 'string' ? item.trim() : nonEmpty(item?.date);
+    if (!date || !isCalendarDate(date)) return [];
+
+    const label = (typeof item === 'object' && nonEmpty(item?.label)) || DEFAULT_KEY_DATE_LABEL;
+    return [{ label, date }];
+  });
+}
+
+/** Appends dates not already present; returns null when nothing is new. */
+export function mergeKeyDates(existing: unknown, incoming: KeyDate[]): KeyDate[] | null {
+  const current: KeyDate[] = Array.isArray(existing) ? (existing as KeyDate[]) : [];
+  const known = new Set(current.map((d) => d?.date));
+  const added: KeyDate[] = [];
+
+  for (const keyDate of incoming) {
+    if (known.has(keyDate.date)) continue;
+    known.add(keyDate.date);
+    added.push(keyDate);
+  }
+
+  return added.length ? [...current, ...added] : null;
 }
 
 class WorkspaceMemoryService {
@@ -121,27 +182,10 @@ class WorkspaceMemoryService {
 
     const currentMemory = matter.memory;
 
-          const summarisationQuery = `
-      You are a legal AI assistant updating the workspace memory for a legal matter.
-
-      CURRENT WORKSPACE MEMORY:
-      - Parties: ${currentMemory.partySummary || 'Not set'}
-      - Legal Issues: ${currentMemory.legalIssues || 'Not set'}
-      - Fact Chronology: ${currentMemory.factChronology || 'Not set'}
-      - Lawyer Notes: ${currentMemory.lawyerNotes || 'Not set'}
-
-      RECENT DOCUMENTS:
-      ${docContext || 'No documents yet.'}
-
-      RECENT CONVERSATIONS:
-      ${convContext || 'No conversations yet.'}
-
-      Based on all of the above, write a concise, structured AI summary of this legal matter (max 400 words).
-      Cover: key parties, core legal issues, current stage, and important next steps if apparent.
-      `.trim();
+    const summarisationQuery = buildMemoryRegenerationPrompt({ memory: currentMemory, docContext, convContext });
 
     try {
-      const result = await pythonBackendService.lawyerAgentChat({
+      const result = await pythonBackendService.lawyerAgentChat(pythonCaller.lawyer(lawyerId, matterId), {
         query: summarisationQuery,
         matterId,
         workspaceMemory: this.buildPayload(matter.memory),
@@ -208,6 +252,65 @@ class WorkspaceMemoryService {
       aiSummary: memory.aiSummary ?? null,
       estimatedTokens: memory.estimatedTokens ?? 0,
     };
+  }
+
+  /**
+   * Apply the memory updates the AI extracted during a matter chat turn.
+   * AI text only fills fields that are still empty, so it never overwrites
+   * what a lawyer wrote. aiSummary is AI-owned and is replaced. New key dates
+   * are appended. Returns true when anything changed.
+   */
+  async applyAiUpdates(matterId: string, updates: AiWorkspaceUpdates): Promise<boolean> {
+    const memory = await prisma.workspaceMemory.upsert({
+      where: { matterId },
+      create: { matterId, estimatedTokens: 0 },
+      update: {},
+    });
+
+    const merged = {
+      partySummary: fillIfEmpty(memory.partySummary, updates.party_summary),
+      factChronology: fillIfEmpty(memory.factChronology, updates.fact_chronology),
+      legalIssues: fillIfEmpty(memory.legalIssues, updates.legal_issues),
+      keyDates: mergeKeyDates(memory.keyDates, normalizeKeyDates(updates.key_dates)),
+    };
+
+    const aiSummary = nonEmpty(updates.ai_summary);
+    const summaryChanged = !!aiSummary && aiSummary !== memory.aiSummary;
+
+    const changed =
+      merged.partySummary !== memory.partySummary ||
+      merged.factChronology !== memory.factChronology ||
+      merged.legalIssues !== memory.legalIssues ||
+      merged.keyDates !== null ||
+      summaryChanged;
+
+    if (!changed) return false;
+
+    const keyDates = merged.keyDates ?? (memory.keyDates as KeyDate[] | null) ?? undefined;
+
+    await prisma.workspaceMemory.update({
+      where: { matterId },
+      data: {
+        partySummary: merged.partySummary,
+        factChronology: merged.factChronology,
+        legalIssues: merged.legalIssues,
+        ...(merged.keyDates ? { keyDates: merged.keyDates } : {}),
+        ...(summaryChanged
+          ? { aiSummary, aiSummaryVersion: { increment: 1 }, lastAiUpdateAt: new Date() }
+          : {}),
+        estimatedTokens: this.estimateTokens({
+          partySummary: merged.partySummary ?? undefined,
+          factChronology: merged.factChronology ?? undefined,
+          legalIssues: merged.legalIssues ?? undefined,
+          keyDates,
+          lawyerNotes: memory.lawyerNotes ?? undefined,
+        }),
+      },
+    });
+
+    logger.info('WorkspaceMemory updated from chat', { matterId, summaryChanged });
+
+    return true;
   }
 
   private estimateTokens(input: UpdateMemoryInput): number {

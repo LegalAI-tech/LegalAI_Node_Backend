@@ -16,7 +16,35 @@ import {
   TemplateSchemaResponse,
   TemplateDetailResponse,
   TemplateCriticalFieldsResponse,
+  DocumentOwnerAssignment,
+  DocumentOwnerAssignmentResult,
 } from '../types/python-backend.types.js';
+import { generatePythonServiceToken, type PythonServiceClaims } from '../utils/jwt.utils.js';
+import { REQUEST_ID_HEADER, getRequestId } from '../utils/request-context.js';
+import { DEFAULT_DOCUMENT_QUESTION } from '../prompts/documents.prompt.js';
+
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    // Identity signed into the service token for this call
+    serviceClaims?: PythonServiceClaims;
+  }
+}
+
+/**
+ * Who a document-touching call acts for. The Python backend only lets a
+ * caller read documents uploaded under the same tenant.
+ */
+export const pythonCaller = {
+  citizen: (userId: string): PythonServiceClaims => ({
+    role: 'CITIZEN',
+    tenant: `citizen:${userId}`,
+  }),
+  lawyer: (lawyerId: string, matterId?: string): PythonServiceClaims => ({
+    role: 'LAWYER',
+    tenant: `lawyer:${lawyerId}`,
+    ...(matterId ? { matter: matterId } : {}),
+  }),
+};
 
 class PythonBackendService {
   private client: AxiosInstance;
@@ -36,12 +64,28 @@ class PythonBackendService {
       },
     });
 
+    // Sign every request; the Python backend rejects calls without a valid service token.
+    this.client.interceptors.request.use((config) => {
+      config.headers.set('Authorization', `Bearer ${generatePythonServiceToken(config.serviceClaims)}`);
+
+      // Lets one request be followed across both services' logs
+      const requestId = getRequestId();
+      if (requestId) config.headers.set(REQUEST_ID_HEADER, requestId);
+
+      return config;
+    });
+
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.code === 'ECONNABORTED') {
           console.error('Python backend timeout. The space might be sleeping or overloaded.');
           error.message = 'The AI service is taking longer than expected. This might be because the service is waking up from sleep. Please try again in a moment.';
+        }
+        if (error.response?.status === 401 || error.response?.status === 503) {
+          console.error(
+            'Python backend rejected the service token. Check that PYTHON_BACKEND_SECRETKEY is set to the same value on both services.'
+          );
         }
         throw error;
       }
@@ -78,6 +122,7 @@ class PythonBackendService {
   }
 
   async agentChat(
+    caller: PythonServiceClaims,
     message: string,
     sessionId?: string,
     documentId?: string,
@@ -90,14 +135,17 @@ class PythonBackendService {
     if (documentId) request.document_id = documentId;
     if (previousSummary) request.previous_summary = previousSummary;
 
-    const response = await this.client.post<AgentChatResponse>('/agent/chat', request);
+    const response = await this.client.post<AgentChatResponse>('/agent/chat', request, {
+      serviceClaims: caller,
+    });
     return response.data;
   }
 
   async agentUploadAndChat(
+    caller: PythonServiceClaims,
     file: Buffer,
     fileName: string,
-    initialMessage: string = 'Please analyze this document',
+    initialMessage: string = DEFAULT_DOCUMENT_QUESTION,
     sessionId?: string,
     inputLanguage?: string,
     outputLanguage?: string,
@@ -112,19 +160,26 @@ class PythonBackendService {
     if (previousSummary) {
       formData.append('previous_summary', previousSummary);
     }
+    if (inputLanguage) {
+      formData.append('input_language', inputLanguage);
+    }
+    if (outputLanguage) {
+      formData.append('output_language', outputLanguage);
+    }
 
     const response = await this.client.post<UploadAndChatResponse>(
       '/agent/upload-and-chat',
       formData,
       {
         headers: formData.getHeaders() as Record<string, string>,
+        serviceClaims: caller,
       }
     );
 
     return response.data;
   }
 
-  async lawyerAgentChat(params: {
+  async lawyerAgentChat(caller: PythonServiceClaims, params: {
     query: string;
     sessionId?: string;
     documentId?: string;
@@ -151,7 +206,23 @@ class PythonBackendService {
     if (params.inputLanguage) body.input_language = params.inputLanguage;
     if (params.outputLanguage) body.output_language = params.outputLanguage;
 
-    const response = await this.client.post<AgentChatResponse>('/agent/chat', body);
+    const response = await this.client.post<AgentChatResponse>('/agent/chat', body, {
+      serviceClaims: caller,
+    });
+    return response.data;
+  }
+
+  /**
+   * One-off backfill: record owners for documents uploaded before the Python
+   * backend tracked ownership. Returns the document ID to store from now on.
+   */
+  async assignDocumentOwners(
+    documents: DocumentOwnerAssignment[]
+  ): Promise<DocumentOwnerAssignmentResult[]> {
+    const response = await this.client.post<DocumentOwnerAssignmentResult[]>(
+      '/documents/owners',
+      { documents }
+    );
     return response.data;
   }
 

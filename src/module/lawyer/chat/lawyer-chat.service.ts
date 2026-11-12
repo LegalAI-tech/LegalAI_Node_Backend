@@ -1,8 +1,10 @@
+import type { Prisma } from '@prisma/client';
 import prisma from '../../../config/database.js';
 import { AppError } from '../../../middleware/error.middleware.js';
 import { logger } from '../../../utils/logger.js';
-import pythonBackendService from '../../../services/python-backend.service.js';
-import workspaceMemoryService from '../workspace/workspace-memory.service.js';
+import pythonBackendService, { pythonCaller } from '../../../services/python-backend.service.js';
+import workspaceMemoryService, { type AiWorkspaceUpdates } from '../workspace/workspace-memory.service.js';
+import matterDocumentService from '../document/matter-document.service.js';
 import crypto from 'crypto';
 
 const HISTORY_WINDOW = 10;          
@@ -13,6 +15,17 @@ export interface CreateConversationInput {
   matterId?: string;         
   documentId?: string;        
   documentName?: string;
+}
+
+// A file attached in a standalone chat, kept on the conversation for follow-up turns
+interface StandaloneAttachment {
+  vectorDocId: string;
+  fileName: string;
+}
+
+function readStandaloneAttachment(metadata: Prisma.JsonValue | null): StandaloneAttachment | undefined {
+  const attachment = (metadata as Record<string, any> | null)?.attachment;
+  return typeof attachment?.vectorDocId === 'string' ? attachment : undefined;
 }
 
 export interface SendMessageInput {
@@ -158,7 +171,12 @@ class LawyerChatService {
     return { message: 'Conversation deleted.' };
   }
 
-  async sendMessage(lawyerId: string, conversationId: string, input: SendMessageInput) {
+  async sendMessage(
+    lawyerId: string,
+    conversationId: string,
+    input: SendMessageInput,
+    file?: Express.Multer.File
+  ) {
     const { message, selectedDocId, inputLanguage, outputLanguage } = input;
 
     const conversation = await prisma.lawyerConversation.findFirst({
@@ -170,6 +188,7 @@ class LawyerChatService {
         documentId: true,
         summary: true,
         memoryVersionAtInject: true,
+        metadata: true,
       },
     });
 
@@ -179,11 +198,17 @@ class LawyerChatService {
 
     let vectorDocId: string | undefined;
     const activeDocId = selectedDocId || conversation.documentId;
+    const standaloneAttachment = readStandaloneAttachment(conversation.metadata);
 
-    if (activeDocId) {
+    if (file && conversation.matterId) {
+      // In a matter, an attachment becomes a matter document and the chat's active document
+      vectorDocId = await this.attachToMatter(lawyerId, conversationId, conversation.matterId, file);
+    } else if (activeDocId) {
       const doc = await prisma.matterDocument.findFirst({
         where: {
           id: activeDocId,
+          // Standalone chats have no matter, so ownership is checked through the document's matter
+          matter: { lawyerId },
           ...(conversation.matterId ? { matterId: conversation.matterId } : {}),
         },
         select: { vectorDocId: true, vectorIndexed: true, title: true },
@@ -192,6 +217,8 @@ class LawyerChatService {
       if (doc?.vectorIndexed && doc.vectorDocId) {
         vectorDocId = doc.vectorDocId;
       }
+    } else if (!file && standaloneAttachment) {
+      vectorDocId = standaloneAttachment.vectorDocId;
     }
 
     let workspaceMemoryPayload: Record<string, any> | undefined;
@@ -253,6 +280,7 @@ class LawyerChatService {
         conversationId,
         role: 'USER',
         content: message,
+        attachments: file ? [file.originalname] : [],
         memoryInjected,
       },
     });
@@ -261,25 +289,52 @@ class LawyerChatService {
     let sessionId = conversation.sessionId ?? undefined;
     let agentsUsed: string[] = [];
     let updatedSummaryStr: string | undefined;
+    let workspaceUpdates: AiWorkspaceUpdates | undefined;
+    let newAttachment: StandaloneAttachment | undefined;
 
     try {
-      const result = await pythonBackendService.lawyerAgentChat({
-        query: message,
-        sessionId,
-        documentId: vectorDocId,
-        history,
-        previousSummary: conversation.summary ?? null,
-        matterId: conversation.matterId ?? undefined,
-        workspaceMemory: workspaceMemoryPayload,
-        conversationType: conversation.matterId ? 'matter_workspace' : 'standalone',
-        inputLanguage,
-        outputLanguage,
-      });
+      if (file && !conversation.matterId) {
+        // Standalone chat: index the file and answer in one call; later turns reuse it
+        const result = await pythonBackendService.agentUploadAndChat(
+          pythonCaller.lawyer(lawyerId),
+          file.buffer,
+          file.originalname,
+          message,
+          sessionId,
+          inputLanguage,
+          outputLanguage,
+          conversation.summary ?? null
+        );
 
-      aiResponse = result.response ?? '';
-      sessionId = result.session_id ?? sessionId;
-      agentsUsed = result.agents_used ?? [];
-      updatedSummaryStr = result.updated_summary;
+        aiResponse = result.response ?? '';
+        sessionId = result.session_id ?? sessionId;
+        agentsUsed = result.agents_used ?? [];
+        updatedSummaryStr = result.updated_summary;
+        vectorDocId = result.document_id ?? undefined;
+
+        if (vectorDocId) {
+          newAttachment = { vectorDocId, fileName: file.originalname };
+        }
+      } else {
+        const result = await pythonBackendService.lawyerAgentChat(pythonCaller.lawyer(lawyerId, conversation.matterId ?? undefined), {
+          query: message,
+          sessionId,
+          documentId: vectorDocId,
+          history,
+          previousSummary: conversation.summary ?? null,
+          matterId: conversation.matterId ?? undefined,
+          workspaceMemory: workspaceMemoryPayload,
+          conversationType: conversation.matterId ? 'matter_workspace' : 'standalone',
+          inputLanguage,
+          outputLanguage,
+        });
+
+        aiResponse = result.response ?? '';
+        sessionId = result.session_id ?? sessionId;
+        agentsUsed = result.agents_used ?? [];
+        updatedSummaryStr = result.updated_summary;
+        workspaceUpdates = result.workspace_updates ?? undefined;
+      }
 
     } catch (pyError: any) {
       logger.error('Python agent call failed in lawyer chat', {
@@ -316,8 +371,26 @@ class LawyerChatService {
         ...(memoryInjected && currentMemoryVersion !== undefined
           ? { memoryVersionAtInject: currentMemoryVersion }
           : {}),
+        ...(newAttachment
+          ? {
+              metadata: {
+                ...((conversation.metadata as Prisma.JsonObject | null) ?? {}),
+                attachment: { ...newAttachment },
+              },
+            }
+          : {}),
       },
     });
+
+    let memoryUpdated = false;
+
+    if (conversation.matterId && workspaceUpdates) {
+      try {
+        memoryUpdated = await workspaceMemoryService.applyAiUpdates(conversation.matterId, workspaceUpdates);
+      } catch (err) {
+        logger.warn('Failed to apply AI memory updates', { matterId: conversation.matterId, err });
+      }
+    }
 
     if (conversation.matterId) {
       this.maybeRegenerateMemory(lawyerId, conversation.matterId, conversationId).catch(() => {});
@@ -339,7 +412,32 @@ class LawyerChatService {
       },
       sessionId,
       memoryInjected,
+      memoryUpdated,
     };
+  }
+
+  private async attachToMatter(
+    lawyerId: string,
+    conversationId: string,
+    matterId: string,
+    file: Express.Multer.File
+  ): Promise<string> {
+    const doc = await matterDocumentService.uploadDocument(lawyerId, matterId, file, {});
+
+    if (!doc.vectorIndexed || !doc.vectorDocId) {
+      throw new AppError(
+        'The attachment was saved to the matter but could not be read. Please try again.',
+        502,
+        'ATTACHMENT_NOT_INDEXED'
+      );
+    }
+
+    await prisma.lawyerConversation.update({
+      where: { id: conversationId },
+      data: { documentId: doc.id, documentName: doc.title },
+    });
+
+    return doc.vectorDocId;
   }
 
   private async maybeRegenerateMemory(

@@ -3,6 +3,7 @@ import type { RequestHandler } from 'express';
 import multer from 'multer';
 import chatController from './chat.controller.js';
 import { authenticate } from '../../../middleware/auth.middleware.js';
+import { keepRequestContext } from '../../../middleware/request-id.middleware.js';
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.post('/conversations', chatController.createConversation as RequestHandle
 
 router.post(
   '/conversations/:conversationId/messages',
-  upload.single('file'),
+  keepRequestContext(upload.single('file')),
   chatController.sendMessage as RequestHandler
 );
 

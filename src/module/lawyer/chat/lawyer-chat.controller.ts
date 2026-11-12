@@ -30,7 +30,7 @@ class LawyerChatController {
     } catch (error) { next(error); }
   }
 
-  async sendMessage(req: LawyerAuthRequest, res: Response, next: NextFunction) {
+  async sendMessage(req: LawyerAuthRequest & { file?: Express.Multer.File }, res: Response, next: NextFunction) {
     try {
       const lawyerId = req.lawyer!.id;
       const { conversationId } = req.params;
@@ -46,7 +46,7 @@ class LawyerChatController {
         selectedDocId,
         inputLanguage: input_language,
         outputLanguage: output_language,
-      });
+      }, req.file);
 
       res.status(200).json({ success: true, data: result });
     } catch (error) { next(error); }

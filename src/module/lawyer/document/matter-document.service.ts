@@ -1,7 +1,8 @@
 import prisma from '../../../config/database.js';
 import { AppError } from '../../../middleware/error.middleware.js';
 import { logger } from '../../../utils/logger.js';
-import pythonBackendService from '../../../services/python-backend.service.js';
+import pythonBackendService, { pythonCaller } from '../../../services/python-backend.service.js';
+import { DOCUMENT_INDEXING_PROMPT } from '../../../prompts/documents.prompt.js';
 import workspaceMemoryService from '../workspace/workspace-memory.service.js';
 
 const ALLOWED_MIME_TYPES = [
@@ -66,9 +67,10 @@ class MatterDocumentService {
 
     try {
       const indexResult = await pythonBackendService.agentUploadAndChat(
+        pythonCaller.lawyer(lawyerId, matterId),
         file.buffer,
         file.originalname,
-        'Please analyse and index this legal document. Provide a brief summary of its key contents.',
+        DOCUMENT_INDEXING_PROMPT,
       );
 
       const vectorDocId = indexResult.document_id ?? null;

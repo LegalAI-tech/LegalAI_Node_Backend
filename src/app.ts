@@ -3,6 +3,7 @@ import compression from 'compression';
 import passport from './config/passport.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { corsMiddleware } from './middleware/cors.middleware.js';
+import { requestIdMiddleware } from './middleware/request-id.middleware.js';
 import rateLimit from 'express-rate-limit';
 
 // Import routes
@@ -26,6 +27,7 @@ const app: Application = express();
 // Trust proxy for Render deployment
 app.set('trust proxy', 1);
 
+app.use(requestIdMiddleware);
 app.use(corsMiddleware);
 
 
